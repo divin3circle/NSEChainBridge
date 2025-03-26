@@ -16,8 +16,8 @@ import { topMovers } from "@/constants/Data";
 import StockCard from "@/components/StockCard";
 
 const { width } = Dimensions.get("window");
-const BALANCE = 107698.54;
-const GROWTH = 8.96;
+export const BALANCE = 241400.54;
+export const GROWTH = 8.96;
 
 const Home = () => {
   return (
