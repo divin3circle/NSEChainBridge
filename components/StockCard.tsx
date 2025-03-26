@@ -25,7 +25,8 @@ const StockCard = ({ stock }: { stock: Movers }) => {
         </View>
         <Text style={styles.code}>{stock.code}</Text>
         <Text style={styles.name} numberOfLines={1}>
-          {stock.name}
+          {stock.name.substring(0, 12)}
+          {stock.name.length > 12 ? "..." : ""}
         </Text>
         <Text style={styles.price}>KES {stock.dayPrice}</Text>
         <View style={styles.changeContainer}>
