@@ -188,7 +188,7 @@ const Profile = () => {
             }}
           >
             <Ionicons
-              name="logo-bitbucket"
+              name="logo-bitcoin"
               size={34}
               color={Colors.light.muted}
             />

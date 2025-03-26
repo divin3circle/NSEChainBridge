@@ -187,11 +187,13 @@ const StockScreen = () => {
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: "#19AF00" }]}
+            onPress={() => router.navigate(`/mint/${id}`)}
           >
             <Text style={styles.actionButtonText}>Mint</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: "#D92A2A" }]}
+            onPress={() => router.navigate(`/mint/${id}`)}
           >
             <Text style={styles.actionButtonText}>Burn</Text>
           </TouchableOpacity>

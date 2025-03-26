@@ -50,6 +50,14 @@ export default function RootLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="mint/[id]"
+        options={{
+          title: "Mint",
+          headerShown: false,
+          presentation: "modal",
+        }}
+      />
     </Stack>
   );
 }
