@@ -12,7 +12,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { blurhash, Colors, fonts } from "@/constants/Colors";
-import { stockStats, timeRanges, topMovers } from "@/constants/Data";
+import { myStocks, stockStats, timeRanges, topMovers } from "@/constants/Data";
 
 const { width } = Dimensions.get("window");
 
@@ -22,6 +22,8 @@ const StockScreen = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState("1w");
 
   const stock = topMovers.find((s) => s.code === id);
+  const myStock = myStocks.find((s) => s.code === id);
+
   const stats = stockStats[id as string];
 
   if (!stock || !stats) {
@@ -139,6 +141,27 @@ const StockScreen = () => {
           </View>
         </View>
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account Details</Text>
+          <View style={styles.tokenInfo}>
+            <View style={styles.tokenDetail}>
+              <Text style={styles.tokenLabel}>Available Balance</Text>
+              <Text style={styles.tokenValue}>
+                {myStock?.stockBlanace.toLocaleString()}
+              </Text>
+            </View>
+            <View style={styles.tokenDetail}>
+              <Text style={styles.tokenLabel}>Maximum Mintable Amount</Text>
+              <Text style={styles.tokenValue}>
+                {Number(0.5 * (myStock?.stockBlanace || 0)).toLocaleString()}
+              </Text>
+            </View>
+            <View style={styles.tokenDetail}>
+              <Text style={styles.tokenLabel}>Price</Text>
+              <Text style={styles.tokenValue}>KES {stock.dayPrice}</Text>
+            </View>
+          </View>
+        </View>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Token Details</Text>
           <View style={styles.tokenInfo}>
