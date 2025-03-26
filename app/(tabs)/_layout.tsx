@@ -25,6 +25,16 @@ export default () => {
         }}
       />
       <Tabs.Screen
+        name="wallet"
+        options={{
+          title: "Wallet",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="wallet" color={color} size={30} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="markets"
         options={{
           title: "Markets",

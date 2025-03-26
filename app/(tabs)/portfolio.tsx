@@ -321,7 +321,7 @@ const Portfolio = () => {
                   }}
                 >
                   KES{" "}
-                  {Number(stock.tokenBalance * stock.dayPrice).toLocaleString()}
+                  {Number(stock.stockBlanace * stock.dayPrice).toLocaleString()}
                 </Text>
                 <View
                   style={{

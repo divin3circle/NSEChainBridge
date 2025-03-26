@@ -165,12 +165,12 @@ const StockScreen = () => {
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: "#19AF00" }]}
           >
-            <Text style={styles.actionButtonText}>Buy</Text>
+            <Text style={styles.actionButtonText}>Mint</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: "#D92A2A" }]}
           >
-            <Text style={styles.actionButtonText}>Sell</Text>
+            <Text style={styles.actionButtonText}>Burn</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

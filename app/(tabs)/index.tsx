@@ -95,7 +95,7 @@ const Home = () => {
             </View>
           </View>
         </View>
-        <View
+        <TouchableOpacity
           style={{
             height: width * 0.4,
             padding: 16,
@@ -104,6 +104,7 @@ const Home = () => {
             flexDirection: "row",
             justifyContent: "space-between",
           }}
+          onPress={() => router.replace("/(tabs)/portfolio")}
         >
           <View
             style={{
@@ -159,7 +160,78 @@ const Home = () => {
             contentFit="contain"
             transition={1000}
           />
-        </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            height: width * 0.4,
+            padding: 16,
+            backgroundColor: "#f6f7f9",
+            borderRadius: 20,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginVertical: 14,
+          }}
+          onPress={() => router.replace("/(tabs)/wallet")}
+        >
+          <View
+            style={{
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: fonts.regular,
+                fontSize: 20,
+                color: Colors.light.titles,
+              }}
+            >
+              Web3 Summary
+            </Text>
+            <Text
+              style={{
+                fontFamily: fonts.bold,
+                fontSize: 28,
+                marginTop: 14,
+                color: Colors.light.titles,
+              }}
+            >
+              KES {BALANCE.toLocaleString()}
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Ionicons
+                name="caret-up"
+                size={20}
+                color={Colors.light.subtitles}
+              />
+              <Text
+                style={{
+                  fontFamily: fonts.semiBold,
+                  fontSize: 14,
+                  color: Colors.light.titles,
+                }}
+              >
+                {0.59} % in the last 7 days
+              </Text>
+            </View>
+          </View>
+          <Image
+            source={require("../../assets/images/eabl.svg")}
+            style={{
+              width: 150,
+              height: 150,
+            }}
+            placeholder={{ blurhash }}
+            contentFit="contain"
+            transition={1000}
+          />
+        </TouchableOpacity>
         <View
           style={{
             flexDirection: "column",
