@@ -25,12 +25,12 @@ export default () => {
         }}
       />
       <Tabs.Screen
-        name="transactions"
+        name="markets"
         options={{
-          title: "Transactions",
+          title: "Markets",
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="receipt" color={color} size={30} />
+            <Ionicons name="stats-chart" color={color} size={30} />
           ),
         }}
       />
@@ -38,6 +38,7 @@ export default () => {
         name="profile"
         options={{
           title: "Profile",
+          headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="person" color={color} size={30} />
           ),

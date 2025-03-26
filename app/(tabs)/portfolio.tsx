@@ -342,8 +342,9 @@ const Portfolio = () => {
                   )}
                   <Text
                     style={{
-                      fontFamily: fonts.regular,
+                      fontFamily: fonts.semiBold,
                       fontSize: 14,
+                      color: stock.change < 0 ? "#D92A2A" : "#19AF00",
                     }}
                   >
                     {stock.changePercentage} %

@@ -24,6 +24,8 @@ export interface MyStocks extends Movers {
   kesBalance: number;
 }
 
+export type Category = "All" | "Losers" | "Gainers" | "Watchlist";
+
 export const topMovers: Movers[] = [
   {
     image: require("../assets/images/kcb.png"),
@@ -94,6 +96,7 @@ export const topMovers: Movers[] = [
     moverGraph: require("../assets/images/eabl.svg"),
   },
 ];
+
 export const myStocks: MyStocks[] = [
   {
     image: require("../assets/images/kcb.png"),
@@ -172,3 +175,5 @@ export const myStocks: MyStocks[] = [
     kesBalance: 0,
   },
 ];
+
+export const categories: Category[] = ["All", "Gainers", "Losers", "Watchlist"];
