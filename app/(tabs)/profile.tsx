@@ -106,7 +106,7 @@ const Profile = () => {
           </TouchableOpacity>
         </View>
         <TextLine title="Account Settings" text="" />
-        <View
+        <TouchableOpacity
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
@@ -136,8 +136,8 @@ const Profile = () => {
             size={24}
             color={Colors.light.subtitles}
           />
-        </View>
-        <View
+        </TouchableOpacity>
+        <TouchableOpacity
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
@@ -171,8 +171,8 @@ const Profile = () => {
             size={24}
             color={Colors.light.subtitles}
           />
-        </View>
-        <View
+        </TouchableOpacity>
+        <TouchableOpacity
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
@@ -202,7 +202,7 @@ const Profile = () => {
             size={24}
             color={Colors.light.subtitles}
           />
-        </View>
+        </TouchableOpacity>
         <View
           style={{
             flexDirection: "row",
@@ -237,7 +237,7 @@ const Profile = () => {
             English
           </Text>
         </View>
-        <View
+        <TouchableOpacity
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
@@ -267,7 +267,7 @@ const Profile = () => {
             size={24}
             color={Colors.light.subtitles}
           />
-        </View>
+        </TouchableOpacity>
         <Text
           style={{
             marginTop: 18,
