@@ -18,17 +18,13 @@ export default function Index() {
         position: "relative",
       }}
     >
-      <Image
-        source={require("../assets/images/icon.png")}
-        placeholder={{ blurhash }}
-        contentFit="cover"
-        transition={1000}
-      />
       <LottieView
         source={require("../assets/lottie/welcome.json")}
         style={{
           width: width * 0.9,
           height: width * 0.9,
+          position: "absolute",
+          top: 60,
         }}
         autoPlay
         loop
@@ -36,7 +32,7 @@ export default function Index() {
       <View
         style={{
           position: "absolute",
-          bottom: "10%",
+          bottom: "15%",
           paddingHorizontal: 20,
         }}
       >
@@ -63,7 +59,7 @@ export default function Index() {
         <TouchableOpacity
           onPress={() => router.replace("/signin")}
           style={{
-            marginVertical: 14,
+            marginVertical: 24,
             padding: 8,
             backgroundColor: Colors.light.primary,
             borderRadius: 18,
