@@ -1,13 +1,18 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import React from "react";
 import { Movers } from "@/constants/Data";
 import { Image } from "expo-image";
 import { blurhash, Colors, fonts } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 const StockCard = ({ stock }: { stock: Movers }) => {
+  const router = useRouter();
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.replace(`/stock/${stock.code}`)}
+    >
       <View
         style={{
           flexDirection: "column",
@@ -55,7 +60,7 @@ const StockCard = ({ stock }: { stock: Movers }) => {
         contentFit="contain"
         transition={1000}
       />
-    </View>
+    </TouchableOpacity>
   );
 };
 

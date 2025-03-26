@@ -6,6 +6,7 @@ import {
   Text,
   View,
   FlatList,
+  TouchableOpacity,
 } from "react-native";
 import React from "react";
 import { blurhash, Colors, fonts } from "../../constants/Colors";
@@ -14,12 +15,14 @@ import { Image } from "expo-image";
 import TextLine from "@/components/TextLine";
 import { topMovers } from "@/constants/Data";
 import StockCard from "@/components/StockCard";
+import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 export const BALANCE = 241400.54;
 export const GROWTH = 8.96;
 
 const Home = () => {
+  const router = useRouter();
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       <SafeAreaView style={styles.content}>
@@ -171,7 +174,8 @@ const Home = () => {
             }}
           >
             {topMovers.map((mover) => (
-              <View
+              <TouchableOpacity
+                onPress={() => router.replace(`/stock/${mover.code}`)}
                 key={mover.code}
                 style={{
                   justifyContent: "space-between",
@@ -294,7 +298,7 @@ const Home = () => {
                     </Text>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>

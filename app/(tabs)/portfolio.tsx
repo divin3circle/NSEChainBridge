@@ -14,10 +14,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import TextLine from "@/components/TextLine";
 import { myStocks } from "@/constants/Data";
+import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
 const Portfolio = () => {
+  const router = useRouter();
   const [hideBalance, setHideBalance] = useState(true);
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
@@ -226,7 +228,8 @@ const Portfolio = () => {
           }}
         >
           {myStocks.map((stock) => (
-            <View
+            <TouchableOpacity
+              onPress={() => router.replace(`/stock/${stock.code}`)}
               key={stock.code}
               style={{
                 justifyContent: "space-between",
@@ -351,7 +354,7 @@ const Portfolio = () => {
                   </Text>
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </SafeAreaView>
