@@ -74,6 +74,7 @@ const Profile = () => {
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
+            marginVertical: 24,
           }}
         >
           <TouchableOpacity
