@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 import { Image } from "expo-image";
-import { blurhash, Colors, fonts } from "@/constants/colors";
+import { blurhash, Colors, fonts } from "../constants/Colors";
 
 export default function Index() {
   const router = useRouter();
