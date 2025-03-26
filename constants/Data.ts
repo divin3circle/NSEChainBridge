@@ -177,3 +177,109 @@ export const myStocks: MyStocks[] = [
 ];
 
 export const categories: Category[] = ["All", "Gainers", "Losers", "Watchlist"];
+
+export interface StockStats {
+  marketCap: number;
+  peRatio: number;
+  volume24h: number;
+  avgVolume: number;
+  yearHigh: number;
+  yearLow: number;
+  dividend: number;
+  tokenId: string;
+  totalSupply: number;
+  circulatingSupply: number;
+}
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  source: string;
+  date: string;
+  image: any;
+}
+
+export interface TimeRange {
+  label: string;
+  value: string;
+}
+
+export const timeRanges: TimeRange[] = [
+  { label: "24H", value: "24h" },
+  { label: "1W", value: "1w" },
+  { label: "1M", value: "1m" },
+  { label: "3M", value: "3m" },
+  { label: "1Y", value: "1y" },
+  { label: "ALL", value: "all" },
+];
+
+export const stockStats: Record<string, StockStats> = {
+  KCB: {
+    marketCap: 89.5, // Billion KES
+    peRatio: 4.8,
+    volume24h: 1580800,
+    avgVolume: 1200000,
+    yearHigh: 42.75,
+    yearLow: 25.5,
+    dividend: 3.5,
+    tokenId: "0.0.1234567",
+    totalSupply: 3219600000,
+    circulatingSupply: 3000000000,
+  },
+  EQTY: {
+    marketCap: 185.2,
+    peRatio: 5.2,
+    volume24h: 1986200,
+    avgVolume: 1500000,
+    yearHigh: 55.25,
+    yearLow: 35.0,
+    dividend: 4.0,
+    tokenId: "0.0.1234568",
+    totalSupply: 3773600000,
+    circulatingSupply: 3500000000,
+  },
+  SCOM: {
+    marketCap: 760.0,
+    peRatio: 12.5,
+    volume24h: 10112100,
+    avgVolume: 8000000,
+    yearHigh: 35.5,
+    yearLow: 15.7,
+    dividend: 2.5,
+    tokenId: "0.0.1234569",
+    totalSupply: 40000000000,
+    circulatingSupply: 38500000000,
+  },
+  EABL: {
+    marketCap: 95.3,
+    peRatio: 18.2,
+    volume24h: 52600,
+    avgVolume: 45000,
+    yearHigh: 280.0,
+    yearLow: 140.0,
+    dividend: 6.0,
+    tokenId: "0.0.1234570",
+    totalSupply: 790800000,
+    circulatingSupply: 750000000,
+  },
+};
+
+export const stockNews: Record<string, NewsItem[]> = {
+  KCB: [
+    {
+      id: "1",
+      title:
+        "KCB Group reports strong Q4 earnings, exceeds market expectations",
+      source: "Business Daily",
+      date: "2024-03-20",
+      image: require("../assets/images/kcb.png"),
+    },
+    {
+      id: "2",
+      title: "KCB expands regional presence with new South Sudan branches",
+      source: "The Standard",
+      date: "2024-03-18",
+      image: require("../assets/images/kcb.png"),
+    },
+  ],
+};
