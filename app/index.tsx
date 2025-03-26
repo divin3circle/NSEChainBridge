@@ -1,7 +1,10 @@
 import { useRouter } from "expo-router";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import { Image } from "expo-image";
 import { blurhash, Colors, fonts } from "../constants/Colors";
+import LottieView from "lottie-react-native";
+
+const { width } = Dimensions.get("window");
 
 export default function Index() {
   const router = useRouter();
@@ -17,13 +20,18 @@ export default function Index() {
     >
       <Image
         source={require("../assets/images/icon.png")}
-        style={{
-          width: 200,
-          height: 200,
-        }}
         placeholder={{ blurhash }}
         contentFit="cover"
         transition={1000}
+      />
+      <LottieView
+        source={require("../assets/lottie/welcome.json")}
+        style={{
+          width: width * 0.9,
+          height: width * 0.9,
+        }}
+        autoPlay
+        loop
       />
       <View
         style={{
