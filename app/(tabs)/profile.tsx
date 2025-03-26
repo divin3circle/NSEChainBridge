@@ -172,6 +172,44 @@ const Profile = () => {
             color={Colors.light.subtitles}
           />
         </TouchableOpacity>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginVertical: 14,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 8,
+              alignItems: "center",
+            }}
+          >
+            <Ionicons
+              name="logo-bitbucket"
+              size={34}
+              color={Colors.light.muted}
+            />
+            <Text
+              style={{
+                fontFamily: fonts.regular,
+                fontSize: 18,
+              }}
+            >
+              Primary Currency
+            </Text>
+          </View>
+          <Text
+            style={{
+              fontFamily: fonts.regular,
+              fontSize: 16,
+            }}
+          >
+            HBAR
+          </Text>
+        </View>
         <TouchableOpacity
           style={{
             flexDirection: "row",
