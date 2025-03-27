@@ -50,21 +50,21 @@ interface BackendUser {
 
 // Default images for tokens to match frontend expectations
 const TOKEN_IMAGES: Record<string, any> = {
-  KCB: require("../assets/images/kcb.png"),
-  EQTY: require("../assets/images/eqty.png"),
-  SCOM: require("../assets/images/safaricom.png"),
-  EABL: require("../assets/images/eabl.webp"),
-  HBAR: require("../assets/images/hbar.svg"),
-  KSH: require("../assets/images/ksh.svg"),
+  KCB: require("../../assets/images/kcb.png"),
+  EQTY: require("../../assets/images/eqty.png"),
+  SCOM: require("../../assets/images/safaricom.png"),
+  EABL: require("../../assets/images/eabl.webp"),
+  HBAR: require("../../assets/images/hbar.svg"),
+  KSH: require("../../assets/images/ksh.svg"),
   // Add more as needed
 };
 
 // Default graphs for tokens
 const TOKEN_GRAPHS: Record<string, any> = {
-  KCB: require("../assets/images/kcb.svg"),
-  EQTY: require("../assets/images/eqty.svg"),
-  SCOM: require("../assets/images/scom.svg"),
-  EABL: require("../assets/images/eabl.svg"),
+  KCB: require("../../assets/images/kcb.svg"),
+  EQTY: require("../../assets/images/eqty.svg"),
+  SCOM: require("../../assets/images/scom.svg"),
+  EABL: require("../../assets/images/eabl.svg"),
   // Add more as needed
 };
 
