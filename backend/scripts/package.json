@@ -1,0 +1,11 @@
+{
+  "name": "nsechainbridge-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for NSEChainBridge backend",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "update-prices": "node updateStockPrices.js",
+    "populate-holdings": "node populateHoldings.js"
+  }
+}
