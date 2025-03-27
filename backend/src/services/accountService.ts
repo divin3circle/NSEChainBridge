@@ -8,7 +8,11 @@ import {
   TransferTransaction,
   TokenId,
 } from "@hashgraph/sdk";
-import getClient from "../config/hedera";
+import getClient, {
+  isDevelopmentMockMode,
+  OPERATOR_ID,
+  OPERATOR_KEY,
+} from "../config/hedera";
 import tokenService from "./tokenService";
 import Token from "../models/Token";
 import User from "../models/User";
@@ -26,11 +30,7 @@ class AccountService {
     initialBalance = 0.1
   ): Promise<{ accountId: string; privateKey: string }> {
     try {
-      const isDevelopmentMockMode =
-        process.env.NODE_ENV === "development" &&
-        (!process.env.HEDERA_OPERATOR_ID || !process.env.HEDERA_OPERATOR_KEY);
-
-      if (isDevelopmentMockMode) {
+      if (isDevelopmentMockMode()) {
         console.log("[DEV MOCK] Creating mock Hedera account");
 
         // Generate mock account details for development
@@ -153,8 +153,8 @@ class AccountService {
         return [];
       }
 
-      // Get operator key for associations
-      const operatorKey = process.env.HEDERA_OPERATOR_KEY!;
+      // Use hardcoded operator key for associations
+      const operatorKey = OPERATOR_KEY;
 
       // Associate each token with the user's account
       const results = [];
@@ -205,72 +205,55 @@ class AccountService {
   }
 
   /**
-   * Transfer HBAR to a user's account
-   * @param recipientId Hedera account ID to receive HBAR
-   * @param amount Amount of HBAR to transfer
-   * @returns Transaction receipt
+   * Transfer HBAR to another account
+   * @param recipientId Recipient account ID
+   * @param amount Amount to transfer in HBAR
+   * @returns Transaction response
    */
   async transferHbar(recipientId: string, amount: number): Promise<any> {
     try {
-      const isDevelopmentMockMode =
-        process.env.NODE_ENV === "development" &&
-        (!process.env.HEDERA_OPERATOR_ID || !process.env.HEDERA_OPERATOR_KEY);
-
-      if (isDevelopmentMockMode) {
+      if (isDevelopmentMockMode()) {
         console.log(`[DEV MOCK] Transferring ${amount} HBAR to ${recipientId}`);
         return {
           status: "SUCCESS",
-          recipientId,
-          amount,
           transactionId: `mock-tx-${Date.now()}`,
         };
       }
 
+      const client = getClient();
+
+      // Create transfer transaction
+      const transaction = new TransferTransaction()
+        .addHbarTransfer(AccountId.fromString(OPERATOR_ID), new Hbar(-amount))
+        .addHbarTransfer(AccountId.fromString(recipientId), new Hbar(amount))
+        .freezeWith(client);
+
+      let operatorKey;
       try {
-        console.log(
-          `Transferring ${amount} HBAR from operator account to ${recipientId}`
-        );
-        const client = getClient();
-
-        // Create a transaction to transfer HBAR
-        const transferTransaction = await new TransferTransaction()
-          .addHbarTransfer(
-            AccountId.fromString(process.env.HEDERA_OPERATOR_ID!),
-            new Hbar(-amount)
-          )
-          .addHbarTransfer(AccountId.fromString(recipientId), new Hbar(amount))
-          .setTransactionMemo("NSEChainBridge: Token Sale")
-          .freezeWith(client);
-
-        console.log("HBAR transfer transaction created");
-
-        // Execute the transaction
-        const txResponse = await transferTransaction.execute(client);
-        console.log(`Transaction ID: ${txResponse.transactionId.toString()}`);
-
-        // Get the receipt
-        const receipt = await txResponse.getReceipt(client);
-        console.log(`Transaction status: ${receipt.status.toString()}`);
-
-        // Add transaction ID to the receipt
-        const enhancedReceipt = {
-          ...receipt,
-          transactionId: txResponse.transactionId.toString(),
-          explorerUrl: `https://hashscan.io/testnet/transaction/${txResponse.transactionId.toString()}`,
-        };
-
-        return enhancedReceipt;
-      } catch (error) {
-        console.error("HBAR transfer failed, details:", error);
-
-        // Fallback to mock receipt if there's an error
-        return {
-          status: "SUCCESS",
-          recipientId,
-          amount,
-          transactionId: `fallback-tx-${Date.now()}`,
-        };
+        operatorKey = PrivateKey.fromString(OPERATOR_KEY);
+      } catch (e1) {
+        try {
+          operatorKey = PrivateKey.fromStringECDSA(OPERATOR_KEY);
+        } catch (e2) {
+          try {
+            operatorKey = PrivateKey.fromStringECDSA(`0x${OPERATOR_KEY}`);
+          } catch (e3) {
+            throw new Error("Could not parse operator key for HBAR transfer");
+          }
+        }
       }
+
+      // Sign the transaction
+      const signedTx = await transaction.sign(operatorKey);
+
+      // Submit the transaction
+      const txResponse = await signedTx.execute(client);
+
+      // Get the receipt
+      const receipt = await txResponse.getReceipt(client);
+
+      console.log(`HBAR transfer status: ${receipt.status.toString()}`);
+      return receipt;
     } catch (error) {
       console.error("Error transferring HBAR:", error);
       throw error;

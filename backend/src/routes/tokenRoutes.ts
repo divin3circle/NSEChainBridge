@@ -6,6 +6,7 @@ import {
   mintStockTokens,
   burnStockTokens,
   getUserTokenBalances,
+  verifyUserBurnTransaction,
 } from "../controllers/tokenController";
 import { sellTokensForHbar } from "../controllers/sellTokensController";
 import { authMiddleware, requireHederaAccount } from "../middlewares/auth";
@@ -35,6 +36,11 @@ router.post(
   "/:stockCode/burn",
   requireHederaAccount,
   burnStockTokens as RequestHandler
+);
+router.post(
+  "/:stockCode/verify-burn",
+  requireHederaAccount,
+  verifyUserBurnTransaction as RequestHandler
 );
 router.post(
   "/:stockCode/sell",

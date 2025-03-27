@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -7,6 +8,7 @@ import connectDB from "./config/database";
 import authRoutes from "./routes/authRoutes";
 import tokenRoutes from "./routes/tokenRoutes";
 import transactionRoutes from "./routes/transactionRoutes";
+import { initializeStockTokens } from "./scripts/initializeStockTokens";
 
 // Load environment variables
 dotenv.config();
@@ -34,6 +36,24 @@ app.use("/api/transactions", transactionRoutes);
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to NSEChainBridge API" });
 });
+
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI!)
+  .then(async () => {
+    console.log("Connected to MongoDB");
+
+    // Initialize stock tokens
+    try {
+      await initializeStockTokens();
+      console.log("Stock tokens initialized successfully");
+    } catch (error) {
+      console.error("Error initializing stock tokens:", error);
+    }
+  })
+  .catch((error) => {
+    console.error("MongoDB connection error:", error);
+  });
 
 // Start server
 app.listen(PORT, () => {

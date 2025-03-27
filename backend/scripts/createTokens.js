@@ -4,6 +4,11 @@ import mongoose from "mongoose";
 // Load environment variables
 dotenv.config();
 
+const MY_ACCOUNT_ID = AccountId.fromString("0.0.5483001");
+const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(
+  "a21d310e140357b2b623fe74a9499af53d8847b1fd0f0b23376ef76d2ea0bce0"
+);
+
 // Connect to MongoDB
 async function connectDB() {
   try {
