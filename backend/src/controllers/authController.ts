@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import User from "../models/User";
 import { generateToken } from "../utils/jwt";
 import accountService from "../services/accountService";
+import Token from "../models/Token";
 
 /**
  * Register a new user
@@ -109,17 +110,34 @@ export const createHederaAccount = async (req: Request, res: Response) => {
     }
 
     // Create Hedera account
-    const { accountId, privateKey } = await accountService.createAccount();
+    let accountInfo;
+    try {
+      // Try using hederaService first (which has better mock support)
+      const hederaService = (await import("../services/hederaService")).default;
+      accountInfo = await hederaService.createAccount();
+    } catch (error) {
+      // Fall back to accountService if hederaService fails
+      console.warn(
+        "Falling back to accountService for account creation:",
+        error
+      );
+      accountInfo = await accountService.createAccount();
+    }
 
     // Update user with Hedera account
-    user.hederaAccountId = accountId;
-    user.privateKey = privateKey; // Note: In production, encrypt this
+    user.hederaAccountId = accountInfo.accountId;
+    user.privateKey = accountInfo.privateKey; // Note: In production, encrypt this
+
+    // Add additional properties if they exist
+    if ("publicKey" in accountInfo) {
+      user.hederaPublicKey = accountInfo.publicKey as string;
+    }
 
     await user.save();
 
     res.status(201).json({
       message: "Hedera account created successfully",
-      hederaAccountId: accountId,
+      hederaAccountId: accountInfo.accountId,
     });
   } catch (error) {
     console.error("Hedera account creation error:", error);
@@ -134,11 +152,46 @@ export const createHederaAccount = async (req: Request, res: Response) => {
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
     const userId = req.user.id;
+    console.log(`Getting profile for user: ${userId}`);
 
+    // Fetch all user details including token holdings and populate token details
     const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log(`User found, token holdings:`, user.tokenHoldings);
+
+    // If user has token holdings, get token details
+    interface TokenDetail {
+      tokenId: string;
+      symbol: string;
+      name: string;
+      balance: number;
+      stockCode: string | null;
+    }
+
+    let tokenDetails: TokenDetail[] = [];
+    if (user.tokenHoldings && user.tokenHoldings.length > 0) {
+      // Get token IDs from holdings
+      const tokenIds = user.tokenHoldings.map((holding) => holding.tokenId);
+
+      // Fetch token details
+      const tokens = await Token.find({ tokenId: { $in: tokenIds } });
+      console.log(`Found ${tokens.length} tokens for the user`);
+
+      // Combine token details with user holdings
+      tokenDetails = user.tokenHoldings.map((holding) => {
+        const token = tokens.find((t) => t.tokenId === holding.tokenId);
+        return {
+          tokenId: holding.tokenId,
+          symbol: token?.symbol || "UNKNOWN",
+          name: token?.name || "Unknown Token",
+          balance: holding.balance,
+          stockCode: token?.stockCode || null,
+        };
+      });
     }
 
     res.status(200).json({
@@ -149,6 +202,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
         hederaAccountId: user.hederaAccountId,
         stockHoldings: user.stockHoldings,
         tokenHoldings: user.tokenHoldings,
+        tokens: tokenDetails, // Add the enhanced token details
       },
     });
   } catch (error) {

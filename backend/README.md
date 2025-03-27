@@ -10,6 +10,7 @@ Backend service for NSEChainBridge - a platform for tokenizing stocks on the Nai
 - Token burning to reclaim stock positions
 - Token transfer functionality
 - Transaction history
+- Stock token buying and selling with HBAR
 
 ## Technologies
 
@@ -63,7 +64,7 @@ HEDERA_OPERATOR_KEY=your_operator_private_key_here
 4. Start the development server:
 
 ```bash
-npm run dev
+PORT=5001 NODE_ENV=development npm run dev
 ```
 
 ## API Endpoints
@@ -75,19 +76,25 @@ npm run dev
 - `POST /api/auth/create-hedera-account` - Create a Hedera account for the user
 - `GET /api/auth/me` - Get current user profile
 
+### Users
+
+- `GET /api/users/profile` - Get user profile
+- `POST /api/users/hedera-account` - Create a Hedera account for user
+- `GET /api/users/stock-holdings` - Get user's stock holdings
+
 ### Tokens
 
 - `GET /api/tokens` - Get all tokens
-- `GET /api/tokens/:tokenId` - Get token by ID
-- `POST /api/tokens/:tokenId/mint` - Mint tokens
-- `POST /api/tokens/:tokenId/burn` - Burn tokens
-- `GET /api/tokens/balances` - Get user token balances
+- `GET /api/tokens/:id` - Get token by ID
+- `GET /api/tokens/balances` - Get user's token balances (requires auth)
+- `POST /api/tokens/create` - Create a new token (admin only)
+- `POST /api/tokens/:stockCode/mint` - Mint tokens from stock holdings
+- `POST /api/tokens/:stockCode/burn` - Burn tokens to reclaim stock holdings
+- `POST /api/tokens/:stockCode/sell` - Sell tokens for HBAR
 
 ### Transactions
 
-- `POST /api/transactions/buy` - Buy tokens
-- `POST /api/transactions/sell` - Sell tokens
-- `GET /api/transactions/history` - Get user transaction history
+- `GET /api/transactions` - Get user's transaction history
 
 ## Development
 

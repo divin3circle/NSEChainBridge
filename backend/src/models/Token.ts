@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface ITokenMetadata {
   description: string;
-  stockPrice: number;
+  stockPrice: number; // Price in KES
   marketCap: number;
   peRatio?: number;
   volume24h?: number;

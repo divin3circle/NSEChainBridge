@@ -7,6 +7,8 @@ export interface IUser extends Document {
   password: string;
   hederaAccountId?: string; // Hedera account ID associated with user
   privateKey?: string; // Encrypted private key (handle with extreme care)
+  hederaPrivateKey?: string; // For development only, should not be used in production
+  hederaPublicKey?: string; // Public key for Hedera account
   stockHoldings: {
     stockCode: string;
     quantity: number;
@@ -50,6 +52,14 @@ const UserSchema: Schema = new Schema(
     privateKey: {
       type: String,
       select: false, // Never return this by default for security
+    },
+    hederaPrivateKey: {
+      type: String,
+      select: false, // Never return this by default for security
+    },
+    hederaPublicKey: {
+      type: String,
+      sparse: true,
     },
     stockHoldings: [
       {

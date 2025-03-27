@@ -20,6 +20,11 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// Check if we're in development mode with no Hedera credentials
+const isDevelopmentMockMode =
+  process.env.NODE_ENV === "development" &&
+  (!process.env.HEDERA_OPERATOR_ID || !process.env.HEDERA_OPERATOR_KEY);
+
 /**
  * Service for interacting with Hedera Token Service (HTS)
  */
@@ -40,35 +45,48 @@ class TokenService {
       const client = getClient();
 
       // Get the operator account ID and private key from .env
-      const treasuryId = AccountId.fromString(process.env.HEDERA_OPERATOR_ID!);
-      const operatorKey = PrivateKey.fromStringECDSA(
-        process.env.HEDERA_OPERATOR_KEY!
-      );
-      const publicKey = operatorKey.publicKey;
+      const treasuryId = isDevelopmentMockMode
+        ? "0.0.12345"
+        : AccountId.fromString(process.env.HEDERA_OPERATOR_ID!).toString();
 
-      console.log(`Creating token for stock ${stockCode}`);
+      let tokenId = "";
 
-      // Create token transaction
-      const transaction = new TokenCreateTransaction()
-        .setTokenName(`${stockName} Token`)
-        .setTokenSymbol(stockCode)
-        .setDecimals(0)
-        .setInitialSupply(initialSupply)
-        .setTreasuryAccountId(treasuryId)
-        .setSupplyType(TokenSupplyType.Infinite)
-        .setTokenType(TokenType.FungibleCommon)
-        .setSupplyKey(publicKey)
-        .setMaxTransactionFee(new Hbar(30))
-        .freezeWith(client);
+      if (isDevelopmentMockMode) {
+        console.log(`[DEV MOCK] Creating token for stock ${stockCode}`);
+        // Generate a mock token ID for development
+        tokenId = `0.0.${Math.floor(100000 + Math.random() * 900000)}`;
+        console.log(`[DEV MOCK] Token created with ID: ${tokenId}`);
+      } else {
+        // Normal Hedera token creation
+        console.log(`Creating token for stock ${stockCode}`);
 
-      // Execute transaction
-      const txResponse = await transaction.execute(client);
+        const operatorKey = PrivateKey.fromStringECDSA(
+          process.env.HEDERA_OPERATOR_KEY!
+        );
+        const publicKey = operatorKey.publicKey;
 
-      // Get receipt
-      const receipt = await txResponse.getReceipt(client);
-      const tokenId = receipt.tokenId!.toString();
+        // Create token transaction
+        const transaction = new TokenCreateTransaction()
+          .setTokenName(`${stockName} Token`)
+          .setTokenSymbol(stockCode)
+          .setDecimals(0)
+          .setInitialSupply(initialSupply)
+          .setTreasuryAccountId(AccountId.fromString(treasuryId))
+          .setSupplyType(TokenSupplyType.Infinite)
+          .setTokenType(TokenType.FungibleCommon)
+          .setSupplyKey(publicKey)
+          .setMaxTransactionFee(new Hbar(30))
+          .freezeWith(client);
 
-      console.log(`Token created with ID: ${tokenId}`);
+        // Execute transaction
+        const txResponse = await transaction.execute(client);
+
+        // Get receipt
+        const receipt = await txResponse.getReceipt(client);
+        tokenId = receipt.tokenId!.toString();
+
+        console.log(`Token created with ID: ${tokenId}`);
+      }
 
       // Create token record in database
       const token = new Token({
@@ -78,7 +96,7 @@ class TokenService {
         decimals: 0,
         totalSupply: initialSupply,
         circulatingSupply: initialSupply,
-        treasuryAccountId: treasuryId.toString(),
+        treasuryAccountId: treasuryId,
         stockCode,
         metadata: {
           description: `Tokenized representation of ${stockName} shares on the Nairobi Stock Exchange`,
@@ -103,14 +121,22 @@ class TokenService {
    */
   async getTokenInfo(tokenId: string): Promise<any> {
     try {
-      const client = getClient();
+      if (isDevelopmentMockMode) {
+        console.log(`[DEV MOCK] Getting token info for ${tokenId}`);
+        return {
+          tokenId: tokenId,
+          name: "Mock Token",
+          symbol: "MOCK",
+          totalSupply: 1000,
+          decimals: 0,
+        };
+      }
 
+      const client = getClient();
       const query = new TokenInfoQuery().setTokenId(
         TokenId.fromString(tokenId)
       );
-
       const tokenInfo = await query.execute(client);
-
       return tokenInfo;
     } catch (error) {
       console.error("Error getting token info:", error);
@@ -161,17 +187,32 @@ class TokenService {
     receiverAccountId?: string
   ): Promise<any> {
     try {
-      const client = getClient();
-      const operatorKey = PrivateKey.fromStringECDSA(
-        process.env.HEDERA_OPERATOR_KEY!
-      );
-
       // Get token details from database
       const token = await this.getTokenDetails(tokenId);
 
       if (!token) {
         throw new Error(`Token with ID ${tokenId} not found`);
       }
+
+      if (isDevelopmentMockMode) {
+        console.log(`[DEV MOCK] Minting ${amount} tokens for token ${tokenId}`);
+
+        // Update token supply in database
+        token.totalSupply += amount;
+        token.circulatingSupply += amount;
+        await token.save();
+
+        return {
+          status: "SUCCESS",
+          tokenId: tokenId,
+          amount: amount,
+        };
+      }
+
+      const client = getClient();
+      const operatorKey = PrivateKey.fromStringECDSA(
+        process.env.HEDERA_OPERATOR_KEY!
+      );
 
       // Create mint transaction
       const transaction = new TokenMintTransaction()
@@ -220,17 +261,32 @@ class TokenService {
    */
   async burnTokens(tokenId: string, amount: number): Promise<any> {
     try {
-      const client = getClient();
-      const operatorKey = PrivateKey.fromStringECDSA(
-        process.env.HEDERA_OPERATOR_KEY!
-      );
-
       // Get token details from database
       const token = await this.getTokenDetails(tokenId);
 
       if (!token) {
         throw new Error(`Token with ID ${tokenId} not found`);
       }
+
+      if (isDevelopmentMockMode) {
+        console.log(`[DEV MOCK] Burning ${amount} tokens for token ${tokenId}`);
+
+        // Update token supply in database
+        token.totalSupply -= amount;
+        token.circulatingSupply -= amount;
+        await token.save();
+
+        return {
+          status: "SUCCESS",
+          tokenId: tokenId,
+          amount: amount,
+        };
+      }
+
+      const client = getClient();
+      const operatorKey = PrivateKey.fromStringECDSA(
+        process.env.HEDERA_OPERATOR_KEY!
+      );
 
       // Create burn transaction
       const transaction = new TokenBurnTransaction()
@@ -272,6 +328,17 @@ class TokenService {
     privateKey: string
   ): Promise<any> {
     try {
+      if (isDevelopmentMockMode) {
+        console.log(
+          `[DEV MOCK] Associating token ${tokenId} with account ${accountId}`
+        );
+        return {
+          status: "SUCCESS",
+          tokenId: tokenId,
+          accountId: accountId,
+        };
+      }
+
       const client = getClient();
       let privateKeyObj;
 
@@ -326,6 +393,19 @@ class TokenService {
     senderPrivateKey: string
   ): Promise<any> {
     try {
+      if (isDevelopmentMockMode) {
+        console.log(
+          `[DEV MOCK] Transferring ${amount} tokens from ${senderAccountId} to ${receiverAccountId}`
+        );
+        return {
+          status: "SUCCESS",
+          tokenId: tokenId,
+          senderAccountId: senderAccountId,
+          receiverAccountId: receiverAccountId,
+          amount: amount,
+        };
+      }
+
       const client = getClient();
       let privateKeyObj;
 

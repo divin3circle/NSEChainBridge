@@ -12,8 +12,8 @@ Populates users with random stock holdings:
 # First build TypeScript files
 npm run build
 
-# Then run the script
-node scripts/populateStockHoldings.js
+# Run the script
+node scripts/populateHoldings.js
 ```
 
 This script will:
@@ -25,30 +25,32 @@ This script will:
 
 ### Stock Token Creation
 
-Creates Hedera tokens for stocks:
+Creates tokens for stocks:
 
 ```bash
 # First build TypeScript files
 npm run build
 
-# Then run the script
-node scripts/createStockTokens.js
+# Run the script
+node scripts/createTokens.js
 ```
 
 This script will:
 
 - Connect to your MongoDB database
-- Import the token service
-- Create Hedera tokens for each stock (KCB, EQTY, SCOM, EABL) if they don't already exist
+- Create mock tokens for each stock (KCB, EQTY, SCOM, EABL) if they don't already exist
 - Save the token data to the database
 
 ## Usage Requirements
 
-1. Make sure your `.env` file is properly configured with:
-
-   - MongoDB connection string
-   - Hedera credentials
+1. Make sure your `.env` file is properly configured with MongoDB connection string
 
 2. Compile the TypeScript files first with `npm run build` before running the scripts.
 
-3. Ensure you have enough HBAR in your Hedera account to create tokens.
+## Troubleshooting
+
+If you encounter module import errors, make sure:
+
+1. Your TypeScript files are properly compiled to JavaScript in the `dist` folder
+2. The path to the imported modules is correct
+3. You're using Node.js version 14 or higher

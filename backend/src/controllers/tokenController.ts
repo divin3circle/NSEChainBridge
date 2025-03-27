@@ -6,6 +6,8 @@ import Transaction, {
   TransactionStatus,
 } from "../models/Transaction";
 import tokenService from "../services/tokenService";
+import accountService from "../services/accountService";
+import { getUserTokenBalance, updateUserTokenBalance } from "./tokenHelpers";
 
 /**
  * Get all tokens
@@ -351,5 +353,155 @@ export const burnStockTokens = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Burn stock tokens error:", error);
     res.status(500).json({ message: "Error burning tokens", error });
+  }
+};
+
+/**
+ * Get token balances for the current user
+ * @route GET /api/tokens/balances
+ */
+export const getUserTokenBalances = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user.id;
+    console.log(`Getting token balances for user: ${userId}`);
+
+    // Find the user with all fields (including tokenHoldings which might be select: false)
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log(`User found, token holdings:`, user.tokenHoldings);
+
+    // If user has no token holdings
+    if (!user.tokenHoldings || user.tokenHoldings.length === 0) {
+      return res.status(200).json({ balances: [] });
+    }
+
+    // Get all tokens that the user holds
+    const tokenIds = user.tokenHoldings.map((holding) => holding.tokenId);
+    console.log(`Fetching token details for token IDs:`, tokenIds);
+
+    const tokens = await Token.find({ tokenId: { $in: tokenIds } });
+    console.log(`Found ${tokens.length} tokens`);
+
+    // Combine token details with user's balances
+    const balances = user.tokenHoldings.map((holding) => {
+      const token = tokens.find((t) => t.tokenId === holding.tokenId);
+      return {
+        tokenId: holding.tokenId,
+        symbol: token?.symbol || "UNKNOWN",
+        name: token?.name || "Unknown Token",
+        balance: holding.balance,
+        stockCode: token?.stockCode || null,
+        decimals: token?.decimals || 0,
+        metadata: token?.metadata || {},
+      };
+    });
+
+    console.log(`Returning balances:`, balances);
+    res.status(200).json({ balances });
+  } catch (error) {
+    console.error("Get user token balances error:", error);
+    res.status(500).json({ message: "Error getting token balances", error });
+  }
+};
+
+/**
+ * Sell tokens for HBAR
+ * @route POST /api/tokens/:stockCode/sell
+ * @access Private
+ */
+export const sellTokensForHbar = async (req: Request, res: Response) => {
+  try {
+    const { stockCode } = req.params;
+    const { amount } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: "Amount must be greater than 0" });
+    }
+
+    // Check if token exists
+    const token = await tokenService.getTokenByStockCode(stockCode);
+    if (!token) {
+      return res
+        .status(404)
+        .json({ message: `Token for stock ${stockCode} not found` });
+    }
+
+    // Get user information
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.hederaAccountId) {
+      return res
+        .status(400)
+        .json({ message: "User does not have a Hedera account" });
+    }
+
+    // Check if user has enough tokens
+    const userTokenBalance = await getUserTokenBalance(userId, stockCode);
+    if (userTokenBalance < amount) {
+      return res.status(400).json({
+        message: `Insufficient tokens. You have ${userTokenBalance} ${stockCode} tokens, but tried to sell ${amount}`,
+      });
+    }
+
+    // Calculate HBAR value based on token price
+    // Formula: (token price in KES / HBAR price in KES) * amount
+    const HBAR_PRICE_KES = 24.51; // Get this from a service or config
+    const tokenPriceKES = token.metadata.stockPrice || 0;
+
+    // Calculate how many HBAR to transfer to the user
+    const hbarAmount = (tokenPriceKES / HBAR_PRICE_KES) * amount;
+
+    // 1. Burn the tokens
+    await tokenService.burnTokens(token.tokenId, amount);
+
+    // 2. Update user's token balance
+    await updateUserTokenBalance(userId, stockCode, -amount);
+
+    // 3. Transfer HBAR to user
+    const transferResult = await accountService.transferHbar(
+      user.hederaAccountId,
+      hbarAmount
+    );
+
+    // 4. Create transaction record
+    const transaction = new Transaction({
+      userId,
+      tokenId: token.tokenId,
+      stockCode,
+      type: TransactionType.SELL,
+      status: TransactionStatus.COMPLETED,
+      amount,
+      fee: 0,
+      paymentTokenId: "HBAR",
+      paymentAmount: hbarAmount,
+      hederaTransactionId: transferResult.transactionId?.toString(),
+    });
+    await transaction.save();
+
+    res.status(200).json({
+      message: `Successfully sold ${amount} ${stockCode} tokens for ${hbarAmount.toFixed(
+        8
+      )} HBAR`,
+      stockCode,
+      tokensSold: amount,
+      hbarReceived: hbarAmount,
+      hbarPrice: HBAR_PRICE_KES,
+      tokenPrice: tokenPriceKES,
+      transactionId: transaction._id,
+    });
+  } catch (error: any) {
+    console.error("Error selling tokens:", error);
+    res.status(500).json({ message: error.message });
   }
 };
