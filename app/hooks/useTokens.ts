@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { adaptTokensToFrontendFormat } from "../utils/apiAdapters";
-import { MyTokens } from "../../constants/Data";
-
-// Define your API base URL
-const API_BASE_URL = "http://localhost:5001/api";
+import { API_BASE_URL, MyTokens } from "../../constants/Data";
 
 export function useTokens() {
   const [tokens, setTokens] = useState<MyTokens[]>([]);

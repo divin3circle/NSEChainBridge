@@ -57,7 +57,7 @@ export default function Index() {
           Powered By Hedera
         </Text>
         <TouchableOpacity
-          onPress={() => router.replace("/signin")}
+          onPress={() => router.navigate("/signin")}
           style={{
             marginVertical: 24,
             padding: 8,

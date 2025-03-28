@@ -57,6 +57,7 @@ function MarketsHeader() {
               borderBottomWidth: 1.5,
             }}
             onPress={() => setActiveCategory(category as Category)}
+            key={category}
           >
             <Text
               style={{

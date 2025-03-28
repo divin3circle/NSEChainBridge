@@ -1,10 +1,12 @@
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { useEffect } from "react";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const queryClient = new QueryClient();
   const [loaded] = useFonts({
     OpenSansRegular: require("../assets/fonts/OpenSans-Regular.ttf"),
     OpenSansBold: require("../assets/fonts/OpenSans-Bold.ttf"),
@@ -23,41 +25,49 @@ export default function RootLayout() {
     return null;
   }
   return (
-    <Stack>
-      {" "}
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="index"
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="signin"
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="stock/[id]"
-        options={{
-          title: "Stock",
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="mint/[id]"
-        options={{
-          title: "Mint",
-          headerShown: false,
-          presentation: "modal",
-        }}
-      />
-    </Stack>
+    <QueryClientProvider client={queryClient}>
+      <Stack>
+        {" "}
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="index"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="signin"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="create"
+          options={{
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="stock/[id]"
+          options={{
+            title: "Stock",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="mint/[id]"
+          options={{
+            title: "Mint",
+            headerShown: false,
+            presentation: "modal",
+          }}
+        />
+      </Stack>
+    </QueryClientProvider>
   );
 }
