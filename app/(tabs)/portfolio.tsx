@@ -15,6 +15,7 @@ import { Image } from "expo-image";
 import TextLine from "@/components/TextLine";
 import { myStocks } from "@/constants/Data";
 import { useRouter } from "expo-router";
+import MyHoldings from "../components/MyHoldings";
 
 const { width } = Dimensions.get("window");
 
@@ -220,143 +221,7 @@ const Portfolio = () => {
           transition={1000}
         />
 
-        <TextLine text="" title="My Stocks" />
-        <View
-          style={{
-            flexDirection: "column",
-            gap: 6,
-          }}
-        >
-          {myStocks.map((stock) => (
-            <TouchableOpacity
-              onPress={() => router.replace(`/stock/${stock.code}`)}
-              key={stock.code}
-              style={{
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexDirection: "row",
-                borderBottomColor: Colors.light.tint,
-                borderBottomWidth: 1,
-                paddingBottom: 12,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <View
-                  style={{
-                    borderWidth: 1,
-                    borderRadius: 30,
-                    height: 60,
-                    width: 60,
-                    borderColor: Colors.light.tint,
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Image
-                    source={stock.image}
-                    style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 25,
-                    }}
-                    placeholder={{ blurhash }}
-                    contentFit="contain"
-                    transition={1000}
-                  />
-                </View>
-                <View
-                  style={{
-                    flexDirection: "column",
-                    gap: 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontFamily: fonts.semiBold,
-                      fontSize: 18,
-                    }}
-                  >
-                    {stock.code}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: fonts.regular,
-                      fontSize: 14,
-                    }}
-                  >
-                    {stock.name.substring(0, 15)}
-                    {stock.name.length > 15 ? "..." : ""}
-                  </Text>
-                </View>
-              </View>
-              <Image
-                source={stock.moverGraph}
-                style={{
-                  width: 50,
-                  height: 50,
-                  borderRadius: 25,
-                }}
-                placeholder={{ blurhash }}
-                contentFit="contain"
-                transition={1000}
-              />
-              <View
-                style={{
-                  flexDirection: "column",
-                  gap: 4,
-                  alignItems: "flex-end",
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: fonts.semiBold,
-                    fontSize: 16,
-                  }}
-                >
-                  KES{" "}
-                  {Number(stock.stockBlanace * stock.dayPrice).toLocaleString()}
-                </Text>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 2,
-                  }}
-                >
-                  {stock.change < 0 ? (
-                    <Ionicons
-                      name="remove-outline"
-                      color={stock.change < 0 ? "#D92A2A" : "#19AF00"}
-                      size={18}
-                    />
-                  ) : (
-                    <Ionicons
-                      name="add-outline"
-                      color={stock.change < 0 ? "#D92A2A" : "#19AF00"}
-                      size={18}
-                    />
-                  )}
-                  <Text
-                    style={{
-                      fontFamily: fonts.semiBold,
-                      fontSize: 14,
-                      color: stock.change < 0 ? "#D92A2A" : "#19AF00",
-                    }}
-                  >
-                    {stock.changePercentage} %
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <MyHoldings />
       </SafeAreaView>
     </ScrollView>
   );

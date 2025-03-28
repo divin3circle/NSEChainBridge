@@ -6,25 +6,54 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { blurhash, Colors, fonts } from "@/constants/Colors";
-import { myStocks, stockStats, timeRanges, topMovers } from "@/constants/Data";
+import { stockStats, timeRanges } from "@/constants/Data";
+import { useStocks } from "../hooks/useStocks";
+import { useTokens } from "../hooks/useTokens";
 
 const { width } = Dimensions.get("window");
 
 const StockScreen = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { stocks, isLoading, error, refetch } = useStocks();
+  const {
+    tokens,
+    isLoading: isTokensLoading,
+    error: tokensError,
+  } = useTokens();
   const [selectedTimeRange, setSelectedTimeRange] = useState("1w");
 
-  const stock = topMovers.find((s) => s.code === id);
-  const myStock = myStocks.find((s) => s.code === id);
-
+  const stock = stocks.find((s) => s.code === id);
+  const myStock = stocks.find((s) => s.code === id);
+  const myToken = tokens.find((t) => t.code === id);
   const stats = stockStats[id as string];
+
+  if (isLoading || isTokensLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.light.primary} />
+        <Text style={styles.loadingText}>Loading your holdings...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Error loading your holdings</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (!stock || !stats) {
     return (
@@ -167,20 +196,18 @@ const StockScreen = () => {
           <View style={styles.tokenInfo}>
             <View style={styles.tokenDetail}>
               <Text style={styles.tokenLabel}>Token ID</Text>
-              <Text style={styles.tokenValue}>{stats.tokenId}</Text>
+              <Text style={styles.tokenValue}>{myToken?.tokenId}</Text>
             </View>
             <View style={styles.tokenDetail}>
-              <Text style={styles.tokenLabel}>Total Supply</Text>
-              <Text style={styles.tokenValue}>
-                {stats.totalSupply.toLocaleString()}
-              </Text>
+              <Text style={styles.tokenLabel}>Total / Stock Ratio</Text>
+              <Text style={styles.tokenValue}>1 : 1</Text>
             </View>
-            <View style={styles.tokenDetail}>
+            {/* <View style={styles.tokenDetail}>
               <Text style={styles.tokenLabel}>Circulating Supply</Text>
               <Text style={styles.tokenValue}>
-                {stats.circulatingSupply.toLocaleString()}
+                {myToken?.circulatingSupply}
               </Text>
-            </View>
+            </View> */}
           </View>
         </View>
 
@@ -362,5 +389,37 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semiBold,
     fontSize: 16,
     color: "#fff",
+  },
+  errorText: {
+    fontFamily: fonts.regular,
+    color: "#F44336",
+    marginBottom: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontFamily: fonts.regular,
+    color: Colors.light.subtitles,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  retryButton: {
+    backgroundColor: Colors.light.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontFamily: fonts.semiBold,
+    color: Colors.light.tint,
   },
 });

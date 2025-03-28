@@ -48,7 +48,6 @@ interface BackendUser {
   }>;
 }
 
-// Default images for tokens to match frontend expectations
 const TOKEN_IMAGES: Record<string, any> = {
   KCB: require("../../assets/images/kcb.png"),
   EQTY: require("../../assets/images/eqty.png"),
@@ -56,33 +55,22 @@ const TOKEN_IMAGES: Record<string, any> = {
   EABL: require("../../assets/images/eabl.webp"),
   HBAR: require("../../assets/images/hbar.svg"),
   KSH: require("../../assets/images/ksh.svg"),
-  // Add more as needed
 };
 
-// Default graphs for tokens
 const TOKEN_GRAPHS: Record<string, any> = {
   KCB: require("../../assets/images/kcb.svg"),
   EQTY: require("../../assets/images/eqty.svg"),
   SCOM: require("../../assets/images/scom.svg"),
   EABL: require("../../assets/images/eabl.svg"),
-  // Add more as needed
 };
 
 /**
  * Convert backend token data to frontend MyTokens format
  */
 export function adaptTokensToFrontendFormat(
-  tokens: BackendToken[],
-  balances: BackendTokenBalance[]
+  tokens: BackendToken[]
 ): MyTokens[] {
-  return balances.map((balance) => {
-    const token = tokens.find((t) => t.tokenId === balance.tokenId) || {
-      symbol: balance.symbol,
-      name: balance.name,
-      metadata: balance.metadata,
-    };
-
-    // Default values in case the backend doesn't provide them
+  return tokens.map((token) => {
     const defaultValues = {
       low_12min: 0,
       high_12min: 0,
@@ -95,15 +83,16 @@ export function adaptTokensToFrontendFormat(
       volume: token.metadata?.volume24h || 0,
       adjust: 0,
       date: new Date().toISOString().split("T")[0],
+      stockBlanace: 0,
+      kesBalance: 0,
     };
 
     return {
-      image: TOKEN_IMAGES[token.symbol] || TOKEN_IMAGES.KSH, // Default to KSH if no match
+      image: TOKEN_IMAGES[token.symbol] || TOKEN_IMAGES.KSH,
       code: token.symbol,
       name: token.name,
-      stockBlanace: balance.balance,
-      kesBalance: 0, // This would need to come from somewhere else
-      moverGraph: TOKEN_GRAPHS[token.symbol] || TOKEN_GRAPHS.KCB, // Default graph
+      tokenId: token.tokenId,
+      moverGraph: TOKEN_GRAPHS[token.symbol] || TOKEN_GRAPHS.KCB,
       ...defaultValues,
     } as MyTokens;
   });
@@ -119,7 +108,6 @@ export function adaptStocksToFrontendFormat(
   return user.stockHoldings.map((holding) => {
     const token = tokens.find((t) => t.stockCode === holding.stockCode);
 
-    // Default values
     const defaultValues = {
       low_12min: 0,
       high_12min: 0,

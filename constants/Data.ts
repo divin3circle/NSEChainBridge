@@ -23,6 +23,39 @@ export interface MyStocks extends Movers {
   stockBlanace: number;
   kesBalance: number;
 }
+// export const API_BASE_URL = "http://localhost:5004/api";
+
+export interface MyTokens extends MyStocks {
+  tokenId?: string;
+  circulatingSupply?: number;
+  totalSupply?: number;
+}
+
+export interface Stock {
+  image: string;
+  code: string;
+  name: string;
+  low_12min: number;
+  high_12min: number;
+  dayLow: number;
+  dayHigh: number;
+  dayPrice: number;
+  previous: number;
+  change: number;
+  changePercentage: number;
+  volume: number;
+  adjust: number;
+  date: string;
+}
+
+export interface Movers extends Stock {
+  moverGraph: string;
+}
+
+export interface MyStocks extends Movers {
+  stockBlanace: number;
+  kesBalance: number;
+}
 export const API_BASE_URL = "http://localhost:5004/api";
 
 export interface MyTokens extends MyStocks {}

@@ -1,72 +1,72 @@
-import { useState, useEffect } from "react";
-import { adaptTokensToFrontendFormat } from "../utils/apiAdapters";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL, MyTokens } from "../../constants/Data";
+import { adaptTokensToFrontendFormat } from "../utils/apiAdapters";
+
+interface TokenResponse {
+  tokens: {
+    tokenId: string;
+    symbol: string;
+    name: string;
+    stockCode: string;
+    totalSupply: number;
+    circulatingSupply: number;
+    decimals: number;
+    treasuryAccountId: string;
+    metadata: {
+      description: string;
+      stockPrice: number;
+      marketCap: number;
+      peRatio?: number;
+      volume24h?: number;
+      yearHigh?: number;
+      yearLow?: number;
+      dividend?: number;
+    };
+  }[];
+}
 
 export function useTokens() {
-  const [tokens, setTokens] = useState<MyTokens[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    async function fetchTokens() {
-      try {
-        setLoading(true);
+  const {
+    data: tokens,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["tokens"],
+    queryFn: async (): Promise<MyTokens[]> => {
+      const response = await fetch(`${API_BASE_URL}/tokens`);
 
-        // Get token list and user balances
-        const [tokensResponse, balancesResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/tokens`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }),
-          fetch(`${API_BASE_URL}/tokens/balances`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }),
-        ]);
-
-        if (!tokensResponse.ok) {
-          throw new Error(`Error fetching tokens: ${tokensResponse.status}`);
-        }
-
-        if (!balancesResponse.ok) {
-          throw new Error(
-            `Error fetching balances: ${balancesResponse.status}`
-          );
-        }
-
-        const tokensData = await tokensResponse.json();
-        const balancesData = await balancesResponse.json();
-
-        // Transform the data to match the frontend structure
-        const transformedTokens = adaptTokensToFrontendFormat(
-          tokensData.tokens,
-          balancesData.balances
-        );
-
-        setTokens(transformedTokens);
-      } catch (err) {
-        console.error("Failed to fetch tokens:", err);
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(`Error fetching tokens: ${response.status}`);
       }
-    }
 
-    fetchTokens();
-  }, []);
+      const tokensData: TokenResponse = await response.json();
 
-  // Handler for minting tokens
-  const mintTokens = async (stockCode: string, amount: number) => {
-    try {
+      return adaptTokensToFrontendFormat(tokensData.tokens);
+    },
+    staleTime: 60000,
+  });
+
+  const mintMutation = useMutation({
+    mutationFn: async ({
+      stockCode,
+      amount,
+    }: {
+      stockCode: string;
+      amount: number;
+    }) => {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
       const response = await fetch(`${API_BASE_URL}/tokens/${stockCode}/mint`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ amount }),
       });
@@ -76,47 +76,31 @@ export function useTokens() {
         throw new Error(errorData.message || "Failed to mint tokens");
       }
 
-      // Refresh token data after minting
-      const [tokensResponse, balancesResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/tokens`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }),
-        fetch(`${API_BASE_URL}/tokens/balances`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }),
-      ]);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tokens"] });
+    },
+  });
 
-      const tokensData = await tokensResponse.json();
-      const balancesData = await balancesResponse.json();
+  const burnMutation = useMutation({
+    mutationFn: async ({
+      stockCode,
+      amount,
+    }: {
+      stockCode: string;
+      amount: number;
+    }) => {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
 
-      const transformedTokens = adaptTokensToFrontendFormat(
-        tokensData.tokens,
-        balancesData.balances
-      );
-
-      setTokens(transformedTokens);
-      return true;
-    } catch (err) {
-      console.error("Failed to mint tokens:", err);
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
-      return false;
-    }
-  };
-
-  // Handler for burning tokens
-  const burnTokens = async (stockCode: string, amount: number) => {
-    try {
       const response = await fetch(`${API_BASE_URL}/tokens/${stockCode}/burn`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ amount }),
       });
@@ -126,38 +110,22 @@ export function useTokens() {
         throw new Error(errorData.message || "Failed to burn tokens");
       }
 
-      // Refresh token data after burning
-      const [tokensResponse, balancesResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/tokens`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }),
-        fetch(`${API_BASE_URL}/tokens/balances`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }),
-      ]);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tokens"] });
+    },
+  });
 
-      const tokensData = await tokensResponse.json();
-      const balancesData = await balancesResponse.json();
-
-      const transformedTokens = adaptTokensToFrontendFormat(
-        tokensData.tokens,
-        balancesData.balances
-      );
-
-      setTokens(transformedTokens);
-      return true;
-    } catch (err) {
-      console.error("Failed to burn tokens:", err);
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
-      return false;
-    }
+  return {
+    tokens: tokens ?? [],
+    isLoading,
+    error,
+    mintTokens: mintMutation.mutate,
+    isMinting: mintMutation.isPending,
+    mintError: mintMutation.error,
+    burnTokens: burnMutation.mutate,
+    isBurning: burnMutation.isPending,
+    burnError: burnMutation.error,
   };
-
-  return { tokens, loading, error, mintTokens, burnTokens };
 }

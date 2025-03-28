@@ -16,6 +16,9 @@ import TextLine from "@/components/TextLine";
 import { topMovers } from "@/constants/Data";
 import StockCard from "@/components/StockCard";
 import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import MyHoldings from "../components/MyHoldings";
+import { useStocks } from "../hooks/useStocks";
 
 const { width } = Dimensions.get("window");
 export const BALANCE = 241400.54;
@@ -23,9 +26,14 @@ export const GROWTH = 8.96;
 
 const Home = () => {
   const router = useRouter();
+  const { stocks } = useStocks();
+  const BALANCE = stocks.reduce((acc, stock) => {
+    return acc + Number(stock.dayPrice * stock.stockBlanace);
+  }, 0);
+
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-      <SafeAreaView style={styles.content}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View
           style={{
             flexDirection: "row",
@@ -103,6 +111,7 @@ const Home = () => {
             borderRadius: 20,
             flexDirection: "row",
             justifyContent: "space-between",
+            marginTop: 14,
           }}
           onPress={() => router.replace("/(tabs)/portfolio")}
         >
@@ -152,77 +161,6 @@ const Home = () => {
           </View>
           <Image
             source={require("../../assets/images/chartvector.png")}
-            style={{
-              width: 150,
-              height: 150,
-            }}
-            placeholder={{ blurhash }}
-            contentFit="contain"
-            transition={1000}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={{
-            height: width * 0.4,
-            padding: 16,
-            backgroundColor: "#f6f7f9",
-            borderRadius: 20,
-            flexDirection: "row",
-            justifyContent: "space-between",
-            marginVertical: 14,
-          }}
-          onPress={() => router.replace("/(tabs)/wallet")}
-        >
-          <View
-            style={{
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: fonts.regular,
-                fontSize: 20,
-                color: Colors.light.titles,
-              }}
-            >
-              Web3 Summary
-            </Text>
-            <Text
-              style={{
-                fontFamily: fonts.bold,
-                fontSize: 28,
-                marginTop: 14,
-                color: Colors.light.titles,
-              }}
-            >
-              KES {BALANCE.toLocaleString()}
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              <Ionicons
-                name="caret-up"
-                size={20}
-                color={Colors.light.subtitles}
-              />
-              <Text
-                style={{
-                  fontFamily: fonts.semiBold,
-                  fontSize: 14,
-                  color: Colors.light.titles,
-                }}
-              >
-                {0.59} % in the last 7 days
-              </Text>
-            </View>
-          </View>
-          <Image
-            source={require("../../assets/images/eabl.svg")}
             style={{
               width: 150,
               height: 150,
@@ -374,10 +312,10 @@ const Home = () => {
             ))}
           </View>
         </View>
+
         <View
           style={{
-            marginTop: 1,
-            flex: 1,
+            marginTop: 14,
           }}
         >
           <TextLine title="Watchlist" text="" />
@@ -394,8 +332,8 @@ const Home = () => {
             showsVerticalScrollIndicator={false}
           />
         </View>
-      </SafeAreaView>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -405,6 +343,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+  },
+  header: {
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "white",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "rgba(255, 255, 255, 0.8)",
+    marginTop: 5,
+  },
+  holdingsContainer: {
+    flex: 1,
+    paddingTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 16,
   },
   content: {
     flexDirection: "column",

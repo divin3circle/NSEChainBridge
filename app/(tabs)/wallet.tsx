@@ -7,18 +7,40 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { blurhash, Colors, fonts } from "@/constants/Colors";
 import { Image } from "expo-image";
 import { myStocks, myTokens } from "@/constants/Data";
 import TextLine from "@/components/TextLine";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
 
+interface User {
+  _id: string;
+  email: string;
+  name: string;
+  hederaAccountId?: string;
+  privateKey?: string;
+}
+
 const Wallet = () => {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchLocalUserData = async () => {
+      const user = await AsyncStorage.getItem("user");
+      console.log(user);
+      if (user) {
+        setUser(JSON.parse(user));
+      }
+    };
+    fetchLocalUserData();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -74,7 +96,7 @@ const Wallet = () => {
                   fontSize: 18,
                 }}
               >
-                Account
+                Account ID
               </Text>
               <Text
                 style={{
@@ -82,7 +104,7 @@ const Wallet = () => {
                   fontSize: 20,
                 }}
               >
-                0.0. 12345
+                {user && user.hederaAccountId}
               </Text>
               {/* <Ionicons name="copy" size={14} /> */}
             </View>
@@ -96,7 +118,7 @@ const Wallet = () => {
                 left: 20,
               }}
             >
-              sylus44
+              {user && user.name}
             </Text>
           </View>
           <View

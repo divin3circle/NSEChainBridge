@@ -4,10 +4,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Dimensions,
 } from "react-native";
 import React from "react";
 import { Colors, fonts } from "@/constants/Colors";
 import { useAuth } from "./hooks/useAuth";
+import LottieView from "lottie-react-native";
+
+const { width } = Dimensions.get("window");
 
 const Create = () => {
   const { createHederaAccount, isLoading, error } = useAuth();
@@ -15,9 +19,20 @@ const Create = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Hedera Account</Text>
+      <LottieView
+        source={require("../assets/lottie/welcome.json")}
+        style={{
+          width: width * 0.9,
+          height: width * 0.9,
+          position: "absolute",
+          top: 60,
+        }}
+        autoPlay
+        loop
+      />
       <Text style={styles.description}>
-        To start trading stocks, you need a Hedera account. This account will be
-        used to hold your tokenized stocks and process transactions.
+        To start, you need a Hedera account. This account will be used to hold
+        your tokenized stocks and process transactions.
       </Text>
 
       {error && <Text style={styles.error}>{error.message}</Text>}
