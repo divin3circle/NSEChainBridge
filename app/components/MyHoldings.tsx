@@ -17,6 +17,7 @@ type HoldingsTab = "stocks" | "tokens";
 export default function MyHoldings() {
   const router = useRouter();
   const { stocks, tokens, isLoading, error, refetch } = useStocks();
+
   const [activeTab, setActiveTab] = useState<HoldingsTab>("stocks");
 
   const currentData = activeTab === "stocks" ? stocks : tokens;

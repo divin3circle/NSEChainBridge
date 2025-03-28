@@ -9,19 +9,21 @@ import {
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { blurhash, Colors, fonts } from "@/constants/Colors";
-import { BALANCE, GROWTH } from ".";
+import { GROWTH } from ".";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import TextLine from "@/components/TextLine";
-import { myStocks } from "@/constants/Data";
 import { useRouter } from "expo-router";
 import MyHoldings from "../components/MyHoldings";
-
+import { useStocks } from "../hooks/useStocks";
 const { width } = Dimensions.get("window");
 
 const Portfolio = () => {
   const router = useRouter();
   const [hideBalance, setHideBalance] = useState(true);
+  const { stocks } = useStocks();
+  const BALANCE = stocks.reduce((acc, stock) => {
+    return acc + Number(stock.dayPrice * stock.stockBlanace);
+  }, 0);
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       <SafeAreaView

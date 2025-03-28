@@ -10,12 +10,12 @@ import {
 import React, { useEffect, useState } from "react";
 import { blurhash, Colors, fonts } from "@/constants/Colors";
 import { Image } from "expo-image";
-import { myStocks, myTokens } from "@/constants/Data";
+import { myTokens } from "@/constants/Data";
 import TextLine from "@/components/TextLine";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { useStocks } from "../hooks/useStocks";
+import { useTransactions } from "../hooks/useTransactions";
 const { width } = Dimensions.get("window");
 
 interface User {
@@ -30,16 +30,22 @@ const Wallet = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
 
+  const { transactions, isLoading, error } = useTransactions();
+
+  console.log(transactions);
   useEffect(() => {
     const fetchLocalUserData = async () => {
       const user = await AsyncStorage.getItem("user");
-      console.log(user);
       if (user) {
         setUser(JSON.parse(user));
       }
     };
     fetchLocalUserData();
   }, []);
+
+  const { tokens } = useStocks();
+
+  const randomToken = tokens[Math.floor(Math.random() * tokens.length)];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -154,10 +160,7 @@ const Wallet = () => {
                 fontSize: 20,
               }}
             >
-              KES{" "}
-              {Number(
-                myTokens[2].stockBlanace * myTokens[2].dayPrice
-              ).toLocaleString()}
+              KES 24.51
             </Text>
             <Text
               style={{
@@ -228,10 +231,7 @@ const Wallet = () => {
                 fontSize: 20,
               }}
             >
-              KES{" "}
-              {Number(
-                myTokens[5].stockBlanace * myTokens[5].dayPrice
-              ).toLocaleString()}
+              KES 0.996
             </Text>
             <Text
               style={{
@@ -273,7 +273,9 @@ const Wallet = () => {
             }}
           >
             <Image
-              source={myTokens[3].image}
+              source={
+                randomToken.image || require("../../assets/images/hbar.svg")
+              }
               style={{
                 width: 70,
                 height: 70,
@@ -295,8 +297,9 @@ const Wallet = () => {
             >
               KES{" "}
               {Number(
-                myTokens[3].stockBlanace * myTokens[3].dayPrice
-              ).toLocaleString()}
+                randomToken.stockBlanace * randomToken.dayPrice
+              ).toLocaleString() ||
+                myTokens[2].stockBlanace * myTokens[2].dayPrice}
             </Text>
             <Text
               style={{
@@ -306,10 +309,10 @@ const Wallet = () => {
                 position: "absolute",
                 bottom: 20,
                 left: 20,
-                color: myTokens[3].change < 0 ? "#D92A2A" : "#19AF00",
+                color: randomToken.change < 0 ? "#D92A2A" : "#19AF00",
               }}
             >
-              {myTokens[3].changePercentage} %
+              {randomToken.changePercentage || myTokens[2].changePercentage} %
             </Text>
             <Text
               style={{
@@ -321,7 +324,7 @@ const Wallet = () => {
               }}
             >
               {" "}
-              {myTokens[3].code}
+              {randomToken.code || myTokens[2].code}
             </Text>
           </View>
         </View>
@@ -332,54 +335,132 @@ const Wallet = () => {
             gap: 6,
           }}
         >
-          {myTokens.map((token) => (
-            <TouchableOpacity
-              onPress={() => router.replace(`/stock/${token.code}`)}
-              key={token.code}
-              style={{
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexDirection: "row",
-                borderBottomColor: Colors.light.tint,
-                borderBottomWidth: 1,
-                paddingBottom: 12,
-              }}
-            >
-              <View
+          {tokens.length === 0 ? (
+            <View>
+              <Text
                 style={{
-                  flexDirection: "row",
+                  textAlign: "center",
+                  fontFamily: fonts.regular,
+                  color: Colors.light.subtitles,
+                  marginTop: 14,
+                  fontSize: 16,
+                }}
+              >
+                No tokens found
+              </Text>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: Colors.light.tint,
+                  borderRadius: 10,
+                  marginTop: 14,
+                  width: 200,
+                  alignSelf: "center",
+                  flexDirection: "column",
                   alignItems: "center",
-                  gap: 4,
+                  justifyContent: "center",
+                  padding: 10,
+                }}
+                onPress={() => router.replace("/stock/KCB")}
+              >
+                <Text
+                  style={{
+                    textAlign: "center",
+                    fontFamily: fonts.semiBold,
+                    color: Colors.light.subtitles,
+
+                    fontSize: 14,
+                  }}
+                >
+                  Mint a token
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            tokens.map((token) => (
+              <TouchableOpacity
+                onPress={() => router.replace(`/stock/${token.code}`)}
+                key={token.code}
+                style={{
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexDirection: "row",
+                  borderBottomColor: Colors.light.tint,
+                  borderBottomWidth: 1,
+                  paddingBottom: 12,
                 }}
               >
                 <View
                   style={{
-                    borderWidth: 1,
-                    borderRadius: 30,
-                    height: 60,
-                    width: 60,
-                    borderColor: Colors.light.tint,
-                    flexDirection: "column",
+                    flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: "center",
+                    gap: 4,
                   }}
                 >
-                  <Image
-                    source={token.image}
+                  <View
                     style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 25,
+                      borderWidth: 1,
+                      borderRadius: 30,
+                      height: 60,
+                      width: 60,
+                      borderColor: Colors.light.tint,
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
-                    placeholder={{ blurhash }}
-                    contentFit="contain"
-                    transition={1000}
-                  />
+                  >
+                    <Image
+                      source={token.image}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: 25,
+                      }}
+                      placeholder={{ blurhash }}
+                      contentFit="contain"
+                      transition={1000}
+                    />
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: "column",
+                      gap: 4,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: fonts.semiBold,
+                        fontSize: 18,
+                      }}
+                    >
+                      {token.code}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: fonts.regular,
+                        fontSize: 14,
+                      }}
+                    >
+                      {token.name.substring(0, 15)}
+                      {token.name.length > 15 ? "..." : ""}
+                    </Text>
+                  </View>
                 </View>
+                <Image
+                  source={token.moverGraph}
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                  }}
+                  placeholder={{ blurhash }}
+                  contentFit="contain"
+                  transition={1000}
+                />
                 <View
                   style={{
                     flexDirection: "column",
                     gap: 4,
+                    alignItems: "flex-end",
                   }}
                 >
                   <Text
@@ -388,65 +469,162 @@ const Wallet = () => {
                       fontSize: 18,
                     }}
                   >
-                    {token.code}
+                    KES{" "}
+                    {Number(
+                      token.dayPrice * token.stockBlanace
+                    ).toLocaleString()}
                   </Text>
-                  <Text
+                  <View
                     style={{
-                      fontFamily: fonts.regular,
-                      fontSize: 14,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 2,
                     }}
                   >
-                    {token.name.substring(0, 15)}
-                    {token.name.length > 15 ? "..." : ""}
-                  </Text>
+                    <Text
+                      style={{
+                        fontFamily: fonts.regular,
+                        fontSize: 14,
+                      }}
+                    >
+                      KES {token.dayPrice}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <Image
-                source={token.moverGraph}
-                style={{
-                  width: 50,
-                  height: 50,
-                  borderRadius: 25,
-                }}
-                placeholder={{ blurhash }}
-                contentFit="contain"
-                transition={1000}
-              />
-              <View
-                style={{
-                  flexDirection: "column",
-                  gap: 4,
-                  alignItems: "flex-end",
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: fonts.semiBold,
-                    fontSize: 18,
-                  }}
-                >
-                  KES{" "}
-                  {Number(token.dayPrice * token.stockBlanace).toLocaleString()}
-                </Text>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+        <View
+          style={{
+            flexDirection: "column",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginVertical: 14,
+          }}
+        >
+          <TextLine title="Transactions" text="" />
+          <View
+            style={{
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            {transactions.length === 0 ? (
+              <Text>No transactions found</Text>
+            ) : (
+              <View>
                 <View
                   style={{
                     flexDirection: "row",
+                    justifyContent: "space-between",
                     alignItems: "center",
-                    gap: 2,
+                    width: "100%",
+                    marginBottom: 8,
+                    gap: 4,
                   }}
                 >
                   <Text
                     style={{
-                      fontFamily: fonts.regular,
-                      fontSize: 14,
+                      fontFamily: fonts.semiBold,
+                      fontSize: 16,
+                      width: "25%",
                     }}
                   >
-                    KES {token.dayPrice}
+                    Type
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: fonts.semiBold,
+                      fontSize: 16,
+                      width: "25%",
+                    }}
+                  >
+                    Amount
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: fonts.semiBold,
+                      fontSize: 16,
+                      width: "25%",
+                    }}
+                  >
+                    Token
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: fonts.semiBold,
+                      fontSize: 16,
+                      width: "25%",
+                    }}
+                  >
+                    Status
                   </Text>
                 </View>
+
+                {transactions.map((transaction) => (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginVertical: 6,
+                      width: "100%",
+                      gap: 6,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: "25%",
+                        backgroundColor:
+                          transaction.type === "MINT" ? "#1ebd02" : "#D92A2A",
+                        padding: 4,
+                        borderRadius: 4,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: fonts.bold,
+                          fontSize: 14,
+                          color: "#fff",
+                          textAlign: "center",
+                        }}
+                      >
+                        {transaction.type}
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: fonts.regular,
+                        fontSize: 14,
+                        width: "25%",
+                      }}
+                    >
+                      {transaction.amount}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: fonts.regular,
+                        fontSize: 14,
+                        width: "25%",
+                      }}
+                    >
+                      {transaction.stockCode}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: fonts.regular,
+                        fontSize: 14,
+                        width: "25%",
+                      }}
+                    >
+                      {transaction.status}
+                    </Text>
+                  </View>
+                ))}
               </View>
-            </TouchableOpacity>
-          ))}
+            )}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

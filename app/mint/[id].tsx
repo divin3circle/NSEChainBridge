@@ -8,14 +8,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Modal,
+  Animated,
+  Easing,
 } from "react-native";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { myStocks, myTokens, stockStats } from "@/constants/Data";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, fonts } from "@/constants/Colors";
 import { Image } from "expo-image";
 import { blurhash } from "@/constants/Colors";
+import { useTokens } from "../hooks/useTokens";
+import { useStocks } from "../hooks/useStocks";
 
 const PAYMENT_TOKENS = ["HBAR", "KSH"];
 
@@ -26,8 +31,13 @@ const MintToken = () => {
   const [selectedPaymentToken, setSelectedPaymentToken] = useState(
     PAYMENT_TOKENS[0]
   );
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [transactionData, setTransactionData] = useState<any>(null);
 
-  const stock = myStocks.find((s) => s.code === id);
+  const { mintTokens, isMinting, mintError } = useTokens();
+  const { stocks } = useStocks();
+
+  const stock = stocks.find((s) => s.code === id);
   const paymentTokens = myTokens.filter((token) =>
     PAYMENT_TOKENS.includes(token.code)
   );
@@ -55,6 +65,43 @@ const MintToken = () => {
     const amount = Math.floor((maxMintableAmount * percentage) / 100);
     setAmount(amount.toString());
   };
+
+  const handleMint = async () => {
+    try {
+      setShowSuccessModal(true); // Show modal immediately with loading state
+      const result = await mintTokens({
+        stockCode: id as string,
+        amount: Number(amount),
+      });
+      setTransactionData(result);
+    } catch (error) {
+      console.error("Mint error:", error);
+      setShowSuccessModal(false); // Hide modal if there's an error
+    }
+  };
+
+  const spinValue = useRef(new Animated.Value(0)).current;
+
+  // Set up the spinning animation
+  useEffect(() => {
+    if (isMinting) {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      spinValue.setValue(0);
+    }
+  }, [isMinting]);
+
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
 
   if (!stock) {
     return (
@@ -127,45 +174,10 @@ const MintToken = () => {
                 <Text style={styles.tokenAmountValue}>
                   {Number(amount || 0).toLocaleString()}
                 </Text>
-                <Text style={styles.tokenAmountLabel}>{stock.code} Tokens</Text>
               </View>
               <View style={styles.tokenRatio}>
-                <Text style={styles.tokenRatioLabel}>P/E Ratio</Text>
-                <Text style={styles.tokenRatioValue}>
-                  {stockStats[stock.code].peRatio}x
-                </Text>
+                <Text style={styles.tokenAmountLabel}>{stock.code} Tokens</Text>
               </View>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Pay with</Text>
-            <View style={styles.paymentTokens}>
-              {paymentTokens.map((token) => (
-                <TouchableOpacity
-                  key={token.code}
-                  style={[
-                    styles.paymentToken,
-                    selectedPaymentToken === token.code &&
-                      styles.selectedPaymentToken,
-                  ]}
-                  onPress={() => setSelectedPaymentToken(token.code)}
-                >
-                  <Image
-                    source={token.image}
-                    style={styles.tokenImage}
-                    placeholder={{ blurhash }}
-                    contentFit="contain"
-                    transition={1000}
-                  />
-                  <View>
-                    <Text style={styles.tokenCode}>{token.code}</Text>
-                    <Text style={styles.tokenBalance}>
-                      Balance: KES {token.stockBlanace.toLocaleString()}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
             </View>
           </View>
 
@@ -201,18 +213,129 @@ const MintToken = () => {
         <View style={styles.footer}>
           <TouchableOpacity
             style={[styles.mintButton, !canMint && styles.mintButtonDisabled]}
-            disabled={!canMint}
-            onPress={() => {
-              // Handle minting logic here
-              router.back();
-            }}
+            disabled={!canMint || isMinting}
+            onPress={handleMint}
           >
             <Text style={styles.mintButtonText}>
-              {canMint ? "Mint Tokens" : "Insufficient Balance"}
+              {isMinting
+                ? "Minting..."
+                : canMint
+                ? "Mint Tokens"
+                : "Insufficient Balance"}
             </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !isMinting && setShowSuccessModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              {isMinting ? (
+                <>
+                  <View style={styles.loadingIcon}>
+                    <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                      <Ionicons
+                        name="sync"
+                        size={48}
+                        color={Colors.light.primary}
+                      />
+                    </Animated.View>
+                  </View>
+                  <Text style={styles.modalTitle}>Minting Tokens...</Text>
+                </>
+              ) : (
+                <>
+                  <View
+                    style={{
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={48}
+                      color={Colors.light.primary}
+                    />
+                    <Text style={styles.modalTitle}>
+                      Tokens Minted Successfully!
+                    </Text>
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: Colors.light.tint,
+                        padding: 10,
+                        borderRadius: 10,
+                        marginTop: 10,
+                        width: 200,
+                        alignSelf: "center",
+                      }}
+                      onPress={() => {
+                        setShowSuccessModal(false);
+                        router.push("/(tabs)/wallet");
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: fonts.semiBold,
+                          fontSize: 16,
+                          textAlign: "center",
+                          color: Colors.light.primary,
+                        }}
+                      >
+                        View in Wallet
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
+
+            {!isMinting && transactionData && (
+              <>
+                <View style={styles.transactionDetails}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Amount</Text>
+                    <Text style={styles.detailValue}>
+                      {transactionData.tokenHolding.balance} {stock.code} Tokens
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Available Stock</Text>
+                    <Text style={styles.detailValue}>
+                      {transactionData.stockHolding.availableQuantity} shares
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Transaction ID</Text>
+                    <Text style={styles.detailValue}>
+                      {transactionData.transaction.hederaTransactionId}
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.viewWalletButton}
+                  onPress={() => {
+                    setShowSuccessModal(false);
+                    router.push("/(tabs)/wallet");
+                  }}
+                >
+                  <Text style={styles.viewWalletButtonText}>
+                    View in Wallet
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -431,5 +554,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.light.titles,
     marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    width: "90%",
+    maxWidth: 400,
+  },
+  modalHeader: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontFamily: fonts.semiBold,
+    fontSize: 20,
+    color: Colors.light.titles,
+    marginTop: 12,
+    textAlign: "center",
+  },
+  transactionDetails: {
+    marginBottom: 24,
+  },
+  viewWalletButton: {
+    backgroundColor: Colors.light.primary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  viewWalletButtonText: {
+    fontFamily: fonts.semiBold,
+    fontSize: 16,
+    color: "#fff",
+  },
+  loadingIcon: {
+    width: 48,
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

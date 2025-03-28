@@ -179,10 +179,22 @@ const StockScreen = () => {
                 {myStock?.stockBlanace.toLocaleString()}
               </Text>
             </View>
+
             <View style={styles.tokenDetail}>
-              <Text style={styles.tokenLabel}>Maximum Mintable Amount</Text>
+              <Text style={styles.tokenLabel}>Locked Amount</Text>
               <Text style={styles.tokenValue}>
-                {Number(0.5 * (myStock?.stockBlanace || 0)).toLocaleString()}
+                {myStock?.lockedQuantity?.toLocaleString()}
+              </Text>
+            </View>
+            <View style={styles.tokenDetail}>
+              <Text style={styles.tokenLabel}>Available Mintable Amount</Text>
+              <Text style={styles.tokenValue}>
+                {myStock !== undefined
+                  ? Number(
+                      0.5 *
+                        (myStock.stockBlanace - (myStock.lockedQuantity ?? 0))
+                    ).toLocaleString()
+                  : 0}
               </Text>
             </View>
             <View style={styles.tokenDetail}>

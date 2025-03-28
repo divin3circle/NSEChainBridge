@@ -23,6 +23,7 @@ interface BackendUser {
   stockHoldings?: {
     stockCode: string;
     quantity: number;
+    lockedQuantity: number;
   }[];
   tokenHoldings?: {
     tokenId: string;
@@ -82,6 +83,7 @@ export function useStocks() {
             userStocks.push({
               ...stockData,
               stockBlanace: holding.quantity,
+              lockedQuantity: holding.lockedQuantity,
             });
           }
         });
@@ -92,10 +94,8 @@ export function useStocks() {
 
       if (user.tokens && user.tokens.length > 0) {
         user.tokens.forEach((token) => {
-          // Find corresponding token in frontend data
           let tokenData = myTokens.find((t) => t.code === token.symbol);
 
-          // If token is related to a stock, use stock data
           if (token.stockCode) {
             const stockData = myStocks.find(
               (stock) => stock.code === token.stockCode
@@ -105,11 +105,10 @@ export function useStocks() {
               userTokens.push({
                 ...tokenData,
                 stockBlanace: token.balance,
-                // Add token ID from backend to our frontend structure
+
                 tokenId: token.tokenId,
               } as EnhancedMyTokens);
             } else if (stockData) {
-              // If we have stock data but no matching token in frontend data
               userTokens.push({
                 ...stockData,
                 stockBlanace: token.balance,
@@ -124,8 +123,6 @@ export function useStocks() {
               tokenId: token.tokenId,
             } as EnhancedMyTokens);
           } else {
-            // For tokens that don't match any in our frontend data
-            // Create minimal representation with proper types
             userTokens.push({
               code: token.symbol,
               name: token.name,
@@ -133,7 +130,6 @@ export function useStocks() {
               stockBlanace: token.balance,
               tokenId: token.tokenId,
               dayPrice: 0,
-              // Add required properties with default values
               low_12min: 0,
               high_12min: 0,
               dayLow: 0,

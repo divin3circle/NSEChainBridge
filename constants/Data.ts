@@ -22,6 +22,7 @@ export interface Movers extends Stock {
 export interface MyStocks extends Movers {
   stockBlanace: number;
   kesBalance: number;
+  lockedQuantity?: number;
 }
 // export const API_BASE_URL = "http://localhost:5004/api";
 

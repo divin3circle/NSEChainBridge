@@ -79,7 +79,7 @@ export function useTokens() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tokens"] });
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
     },
   });
 
