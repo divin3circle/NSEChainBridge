@@ -9,7 +9,7 @@ import {
   verifyUserBurnTransaction,
   getTokenByStockCode,
 } from "../controllers/tokenController";
-import { sellTokensForHbar } from "../controllers/sellTokensController";
+import { sellTokensForUsdc } from "../controllers/sellTokensController";
 import { authMiddleware, requireHederaAccount } from "../middlewares/auth";
 
 const router = express.Router();
@@ -47,7 +47,7 @@ router.post(
 router.post(
   "/:stockCode/sell",
   requireHederaAccount,
-  sellTokensForHbar as RequestHandler
+  sellTokensForUsdc as RequestHandler
 );
 
 export default router;
