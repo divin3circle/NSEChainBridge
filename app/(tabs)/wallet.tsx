@@ -16,7 +16,6 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useStocks } from "../hooks/useStocks";
 import { useTransactions } from "../hooks/useTransactions";
-import ConnectView from "../components/ConnectView";
 const { width } = Dimensions.get("window");
 
 interface User {
@@ -43,27 +42,27 @@ const Wallet = () => {
         }
 
         // Fetch and log wallet details
-        const [
-          walletConnected,
-          walletAddress,
-          walletNetwork,
-          walletCreatedAt,
-          walletDetails,
-        ] = await Promise.all([
-          AsyncStorage.getItem("walletConnected"),
-          AsyncStorage.getItem("walletAddress"),
-          AsyncStorage.getItem("walletNetwork"),
-          AsyncStorage.getItem("walletCreatedAt"),
-          AsyncStorage.getItem("walletDetails"),
-        ]);
+        // const [
+        //   walletConnected,
+        //   walletAddress,
+        //   walletNetwork,
+        //   walletCreatedAt,
+        //   walletDetails,
+        // ] = await Promise.all([
+        //   AsyncStorage.getItem("walletConnected"),
+        //   AsyncStorage.getItem("walletAddress"),
+        //   AsyncStorage.getItem("walletNetwork"),
+        //   AsyncStorage.getItem("walletCreatedAt"),
+        //   AsyncStorage.getItem("walletDetails"),
+        // ]);
 
-        console.log("Wallet Details:", {
-          connected: walletConnected === "true",
-          address: walletAddress,
-          network: walletNetwork,
-          createdAt: walletCreatedAt,
-          fullDetails: walletDetails ? JSON.parse(walletDetails) : null,
-        });
+        // console.log("Wallet Details:", {
+        //   connected: walletConnected === "true",
+        //   address: walletAddress,
+        //   network: walletNetwork,
+        //   createdAt: walletCreatedAt,
+        //   fullDetails: walletDetails ? JSON.parse(walletDetails) : null,
+        // });
       } catch (error) {
         console.error("Error fetching wallet details:", error);
       }
