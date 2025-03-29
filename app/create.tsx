@@ -13,7 +13,7 @@ import { useAuth } from "./hooks/useAuth";
 import LottieView from "lottie-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { useWalletService } from "./hooks/useWalletService";
+import { useWalletService } from "../app/hooks/useWalletService";
 
 const { width } = Dimensions.get("window");
 
