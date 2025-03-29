@@ -8,7 +8,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { blurhash, Colors, fonts } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -19,17 +19,37 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import MyHoldings from "../components/MyHoldings";
 import { useStocks } from "../hooks/useStocks";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
 export const BALANCE = 241400.54;
 export const GROWTH = 8.96;
 
+interface User {
+  _id: string;
+  email: string;
+  name: string;
+  hederaAccountId?: string;
+  privateKey?: string;
+}
+
 const Home = () => {
   const router = useRouter();
   const { stocks } = useStocks();
+  const [user, setUser] = useState<User | null>(null);
   const BALANCE = stocks.reduce((acc, stock) => {
     return acc + Number(stock.dayPrice * stock.stockBlanace);
   }, 0);
+
+  useEffect(() => {
+    const fetchLocalUserData = async () => {
+      const user = await AsyncStorage.getItem("user");
+      if (user) {
+        setUser(JSON.parse(user));
+      }
+    };
+    fetchLocalUserData();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,7 +76,7 @@ const Home = () => {
                 fontSize: 22,
               }}
             >
-              Sylus Abel
+              {user?.name}
             </Text>
           </View>
           <View
