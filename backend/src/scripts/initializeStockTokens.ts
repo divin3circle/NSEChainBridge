@@ -25,6 +25,11 @@ const STOCKS = [
     name: "East African Breweries",
     initialSupply: 1000000,
   },
+  {
+    code: "USDC",
+    name: "USDC",
+    initialSupply: 900000000,
+  },
 ];
 
 export async function initializeStockTokens() {
