@@ -24,8 +24,6 @@ const Create = () => {
         style={{
           width: width * 0.9,
           height: width * 0.9,
-          position: "absolute",
-          top: 60,
         }}
         autoPlay
         loop

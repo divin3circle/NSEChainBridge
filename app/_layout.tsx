@@ -49,7 +49,7 @@ export default function RootLayout() {
         <Stack.Screen
           name="create"
           options={{
-            headerShown: true,
+            headerShown: false,
           }}
         />
         <Stack.Screen
@@ -63,6 +63,14 @@ export default function RootLayout() {
           name="mint/[id]"
           options={{
             title: "Mint",
+            headerShown: false,
+            presentation: "modal",
+          }}
+        />
+        <Stack.Screen
+          name="burn/[id]"
+          options={{
+            title: "Burn",
             headerShown: false,
             presentation: "modal",
           }}

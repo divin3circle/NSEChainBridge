@@ -7,6 +7,7 @@ import {
   burnStockTokens,
   getUserTokenBalances,
   verifyUserBurnTransaction,
+  getTokenByStockCode,
 } from "../controllers/tokenController";
 import { sellTokensForHbar } from "../controllers/sellTokensController";
 import { authMiddleware, requireHederaAccount } from "../middlewares/auth";
@@ -16,6 +17,7 @@ const router = express.Router();
 // Public routes
 router.get("/", getAllTokens as RequestHandler);
 router.get("/:id", getTokenById as RequestHandler);
+router.get("/by-stock/:stockCode", getTokenByStockCode as RequestHandler);
 
 // Protected routes
 router.use(authMiddleware);

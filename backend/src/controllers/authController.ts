@@ -78,6 +78,8 @@ export const login = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         hederaAccountId: user.hederaAccountId,
+        privateKey: user.privateKey,
+        hederaPublicKey: user.hederaPublicKey,
       },
     });
   } catch (error) {
@@ -106,6 +108,8 @@ export const createHederaAccount = async (req: Request, res: Response) => {
       return res.status(400).json({
         message: "User already has a Hedera account",
         hederaAccountId: user.hederaAccountId,
+        privateKey: user.privateKey,
+        publicKey: user.hederaPublicKey,
       });
     }
 
@@ -124,11 +128,9 @@ export const createHederaAccount = async (req: Request, res: Response) => {
       accountInfo = await accountService.createAccount();
     }
 
-    // Update user with Hedera account
     user.hederaAccountId = accountInfo.accountId;
-    user.privateKey = accountInfo.privateKey; // Note: In production, encrypt this
+    user.privateKey = accountInfo.privateKey;
 
-    // Add additional properties if they exist
     if ("publicKey" in accountInfo) {
       user.hederaPublicKey = accountInfo.publicKey as string;
     }
@@ -138,6 +140,8 @@ export const createHederaAccount = async (req: Request, res: Response) => {
     res.status(201).json({
       message: "Hedera account created successfully",
       hederaAccountId: accountInfo.accountId,
+      privateKey: accountInfo.privateKey,
+      publicKey: accountInfo.publicKey || user.hederaPublicKey,
     });
   } catch (error) {
     console.error("Hedera account creation error:", error);

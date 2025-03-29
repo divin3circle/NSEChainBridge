@@ -12,6 +12,9 @@ import {
   TokenType,
   TokenSupplyType,
   PublicKey,
+  Client,
+  TransactionReceiptQuery,
+  TransactionId,
 } from "@hashgraph/sdk";
 import getClient, {
   isDevelopmentMockMode,
@@ -567,11 +570,14 @@ class TokenService {
           }
         }
       } catch (error: any) {
-        console.error("Error parsing sender's private key:", error.message);
-        // Final fallback to operator key
-        console.log("Falling back to operator key for token transfer");
+        console.log(
+          "Error parsing key, falling back to operator key:",
+          error.message
+        );
+
+        // Final fallback to operator key with ECDSA format
         privateKeyObj = PrivateKey.fromStringECDSA(OPERATOR_KEY);
-        console.log("Using fallback operator key with fromStringECDSA");
+        console.log("Fallback to operator key with fromStringECDSA");
       }
 
       // Create transfer transaction
@@ -714,6 +720,59 @@ class TokenService {
     } catch (error: any) {
       console.error(`Error handling token return:`, error);
       throw new Error(`Failed to handle token return: ${error.message}`);
+    }
+  }
+
+  /**
+   * Verify a user-initiated burn transaction
+   * @param tokenId Token that was burned
+   * @param userAccountId User account that burned the tokens
+   * @param amount Amount of tokens burned
+   * @param transactionId Transaction ID of the burn
+   * @returns Transaction receipt
+   */
+  async verifyUserBurnTransaction(
+    tokenId: string,
+    userAccountId: string,
+    amount: number,
+    transactionId: string
+  ) {
+    try {
+      console.log("Verifying burn transaction...");
+      console.log(`Token ID: ${tokenId}`);
+      console.log(`User Account: ${userAccountId}`);
+      console.log(`Amount: ${amount}`);
+      console.log(`Transaction ID: ${transactionId}`);
+
+      // In development mock mode, just return success
+      if (isDevelopmentMockMode()) {
+        console.log("[DEV MOCK] Skipping transaction verification");
+        return { status: "SUCCESS" };
+      }
+
+      // Create a client for testnet
+      const client = Client.forTestnet();
+
+      // Get the transaction receipt
+      const receipt = await new TransactionReceiptQuery()
+        .setTransactionId(TransactionId.fromString(transactionId))
+        .execute(client);
+
+      console.log("Transaction receipt status:", receipt.status.toString());
+
+      if (receipt.status.toString() !== "SUCCESS") {
+        throw new Error(
+          `Transaction failed with status: ${receipt.status.toString()}`
+        );
+      }
+
+      // Since the transaction was successful and we can verify it on HashScan,
+      // we can consider this a successful burn
+      console.log("Transaction verified successfully via receipt status");
+      return { status: "SUCCESS" };
+    } catch (error) {
+      console.error("Error verifying burn transaction:", error);
+      throw error;
     }
   }
 }

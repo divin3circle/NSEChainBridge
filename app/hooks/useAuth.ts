@@ -36,16 +36,22 @@ export function useAuth() {
     }
   };
 
-  const saveHederaData = async (accountId: string, privateKey: string) => {
+  const saveHederaData = async (
+    accountId: string,
+    privateKey: string,
+    publicKey: string
+  ) => {
     try {
       await AsyncStorage.setItem("hederaAccountId", accountId);
       await AsyncStorage.setItem("hederaPrivateKey", privateKey);
+      await AsyncStorage.setItem("hederaPublicKey", publicKey);
 
       const userStr = await AsyncStorage.getItem("user");
       if (userStr) {
         const user = JSON.parse(userStr);
         user.hederaAccountId = accountId;
         user.privateKey = privateKey;
+        user.hederaPublicKey = publicKey;
         await AsyncStorage.setItem("user", JSON.stringify(user));
       }
     } catch (error) {
@@ -121,8 +127,16 @@ export function useAuth() {
 
       return response.json();
     },
-    onSuccess: async (data: { accountId: string; privateKey: string }) => {
-      await saveHederaData(data.accountId, data.privateKey);
+    onSuccess: async (data: {
+      hederaAccountId: string;
+      privateKey: string;
+      publicKey: string;
+    }) => {
+      await saveHederaData(
+        data.hederaAccountId,
+        data.privateKey,
+        data.publicKey
+      );
       router.replace("/(tabs)");
     },
   });
@@ -134,6 +148,7 @@ export function useAuth() {
         "user",
         "hederaAccountId",
         "hederaPrivateKey",
+        "hederaPublicKey",
       ]);
       queryClient.clear();
       router.replace("/");

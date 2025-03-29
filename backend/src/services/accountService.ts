@@ -7,6 +7,7 @@ import {
   AccountInfoQuery,
   TransferTransaction,
   TokenId,
+  Client,
 } from "@hashgraph/sdk";
 import getClient, {
   isDevelopmentMockMode,
@@ -21,14 +22,26 @@ import User from "../models/User";
  * Service for interacting with Hedera Account Service
  */
 class AccountService {
+  private client: Client;
+  private operatorId: AccountId;
+  private operatorKey: PrivateKey;
+
+  constructor() {
+    // Initialize with your operator account (from environment variables)
+    this.operatorId = AccountId.fromString(process.env.HEDERA_OPERATOR_ID!);
+    this.operatorKey = PrivateKey.fromString(process.env.HEDERA_OPERATOR_KEY!);
+    this.client = Client.forTestnet();
+    this.client.setOperator(this.operatorId, this.operatorKey);
+  }
+
   /**
    * Create a new Hedera account
    * @param initialBalance Initial balance in HBAR
-   * @returns Object containing account ID and private key
+   * @returns Object containing account ID, private key, and public key
    */
   async createAccount(
     initialBalance = 0.1
-  ): Promise<{ accountId: string; privateKey: string }> {
+  ): Promise<{ accountId: string; privateKey: string; publicKey: string }> {
     try {
       if (isDevelopmentMockMode()) {
         console.log("[DEV MOCK] Creating mock Hedera account");
@@ -39,38 +52,44 @@ class AccountService {
         return {
           accountId: `0.0.${Math.floor(100000 + Math.random() * 900000)}`,
           privateKey: privateKey.toStringDer(),
+          publicKey: privateKey.publicKey.toString(),
         };
       }
 
-      const client = getClient();
-
-      // Generate a new ECDSA key pair (compatible with EVM)
-      const newKey = PrivateKey.generateECDSA();
-      const newPublicKey = newKey.publicKey;
+      // Generate a new key pair for the account
+      const accountPrivateKey = PrivateKey.generateECDSA();
+      const accountPublicKey = accountPrivateKey.publicKey;
 
       console.log("Creating new Hedera account...");
 
       try {
-        // Create a new account with an initial balance and alias it with the EVM address
+        // Create new account with initial balance
         const transaction = new AccountCreateTransaction()
-          .setKey(newPublicKey)
-          .setInitialBalance(new Hbar(initialBalance))
-          .setAlias(newPublicKey.toEvmAddress());
+          .setAlias(accountPublicKey.toEvmAddress())
+          .setKey(accountPublicKey)
+          .setInitialBalance(new Hbar(initialBalance));
 
-        // Submit the transaction to the Hedera network
-        const txResponse = await transaction.execute(client);
+        // Execute the transaction
+        const response = await transaction.execute(this.client);
 
         // Get the receipt
-        const receipt = await txResponse.getReceipt(client);
+        const receipt = await response.getReceipt(this.client);
 
         // Get the new account ID
-        const accountId = receipt.accountId!.toString();
+        const newAccountId = receipt.accountId;
 
-        console.log(`New account created: ${accountId}`);
+        if (!newAccountId) {
+          throw new Error("Failed to get account ID from receipt");
+        }
+
+        console.log("New account created with ID:", newAccountId.toString());
+        console.log("Private key:", accountPrivateKey.toString());
+        console.log("Public key:", accountPublicKey.toString());
 
         return {
-          accountId,
-          privateKey: newKey.toStringDer(),
+          accountId: newAccountId.toString(),
+          privateKey: accountPrivateKey.toString(),
+          publicKey: accountPublicKey.toString(),
         };
       } catch (error) {
         console.error(
@@ -81,7 +100,8 @@ class AccountService {
         // Fallback to mock account if there's an error
         return {
           accountId: `0.0.${Math.floor(100000 + Math.random() * 900000)}`,
-          privateKey: newKey.toStringDer(),
+          privateKey: PrivateKey.generateECDSA().toStringDer(),
+          publicKey: PrivateKey.generateECDSA().publicKey.toString(),
         };
       }
     } catch (error) {
@@ -224,27 +244,12 @@ class AccountService {
 
       // Create transfer transaction
       const transaction = new TransferTransaction()
-        .addHbarTransfer(AccountId.fromString(OPERATOR_ID), new Hbar(-amount))
+        .addHbarTransfer(this.operatorId, new Hbar(-amount))
         .addHbarTransfer(AccountId.fromString(recipientId), new Hbar(amount))
         .freezeWith(client);
 
-      let operatorKey;
-      try {
-        operatorKey = PrivateKey.fromString(OPERATOR_KEY);
-      } catch (e1) {
-        try {
-          operatorKey = PrivateKey.fromStringECDSA(OPERATOR_KEY);
-        } catch (e2) {
-          try {
-            operatorKey = PrivateKey.fromStringECDSA(`0x${OPERATOR_KEY}`);
-          } catch (e3) {
-            throw new Error("Could not parse operator key for HBAR transfer");
-          }
-        }
-      }
-
       // Sign the transaction
-      const signedTx = await transaction.sign(operatorKey);
+      const signedTx = await transaction.sign(this.operatorKey);
 
       // Submit the transaction
       const txResponse = await signedTx.execute(client);

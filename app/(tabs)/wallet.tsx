@@ -32,7 +32,6 @@ const Wallet = () => {
 
   const { transactions, isLoading, error } = useTransactions();
 
-  console.log(transactions);
   useEffect(() => {
     const fetchLocalUserData = async () => {
       const user = await AsyncStorage.getItem("user");
@@ -274,7 +273,7 @@ const Wallet = () => {
           >
             <Image
               source={
-                randomToken.image || require("../../assets/images/hbar.svg")
+                randomToken?.image || require("../../assets/images/hbar.svg")
               }
               style={{
                 width: 70,
@@ -297,7 +296,7 @@ const Wallet = () => {
             >
               KES{" "}
               {Number(
-                randomToken.stockBlanace * randomToken.dayPrice
+                randomToken?.stockBlanace * randomToken?.dayPrice
               ).toLocaleString() ||
                 myTokens[2].stockBlanace * myTokens[2].dayPrice}
             </Text>
@@ -309,10 +308,10 @@ const Wallet = () => {
                 position: "absolute",
                 bottom: 20,
                 left: 20,
-                color: randomToken.change < 0 ? "#D92A2A" : "#19AF00",
+                color: randomToken?.change < 0 ? "#D92A2A" : "#19AF00",
               }}
             >
-              {randomToken.changePercentage || myTokens[2].changePercentage} %
+              {randomToken?.changePercentage || myTokens[2].changePercentage} %
             </Text>
             <Text
               style={{
@@ -324,7 +323,7 @@ const Wallet = () => {
               }}
             >
               {" "}
-              {randomToken.code || myTokens[2].code}
+              {randomToken?.code || myTokens[2].code}
             </Text>
           </View>
         </View>

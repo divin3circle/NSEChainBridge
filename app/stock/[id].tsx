@@ -232,9 +232,9 @@ const StockScreen = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: "#D92A2A" }]}
-            onPress={() => router.navigate(`/mint/${id}`)}
+            onPress={() => router.navigate(`/burn/${id}`)}
           >
-            <Text style={styles.actionButtonText}>Burn</Text>
+            <Text style={styles.actionButtonText}>Redeem</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

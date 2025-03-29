@@ -240,37 +240,53 @@ export const mintStockTokens = async (req: Request, res: Response) => {
  */
 export const burnStockTokens = async (req: Request, res: Response) => {
   try {
-    const { amount } = req.body;
+    const { amount, transactionId } = req.body;
     const { stockCode } = req.params;
     const userId = req.user.id;
 
+    console.log(`Burn request received for ${amount} ${stockCode} tokens`);
+    console.log(`Transaction ID: ${transactionId}`);
+    console.log(`User ID: ${userId}`);
+
     if (!amount || amount <= 0) {
-      return res.status(400).json({
+      console.log("Invalid amount provided");
+      res.status(400).json({
         message: "A positive amount is required",
       });
+      return;
     }
 
     // Find the user
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      console.log("User not found");
+      res.status(404).json({ message: "User not found" });
+      return;
     }
+
+    console.log(`User found: ${user.hederaAccountId}`);
 
     // Check if user has a Hedera account
     if (!user.hederaAccountId) {
-      return res.status(400).json({
+      console.log("User has no Hedera account");
+      res.status(400).json({
         message: "You need a Hedera account to burn tokens",
       });
+      return;
     }
 
     // Find the token for this stock
     const token = await tokenService.getTokenByStockCode(stockCode);
 
     if (!token) {
-      return res.status(404).json({
+      console.log(`Token not found for stock ${stockCode}`);
+      res.status(404).json({
         message: `No token exists for stock ${stockCode}`,
       });
+      return;
     }
+
+    console.log(`Token found: ${token.tokenId}`);
 
     // Find the token holding
     const tokenHoldingIndex = user.tokenHoldings.findIndex(
@@ -281,100 +297,124 @@ export const burnStockTokens = async (req: Request, res: Response) => {
       tokenHoldingIndex === -1 ||
       user.tokenHoldings[tokenHoldingIndex].balance < amount
     ) {
-      return res.status(400).json({
+      console.log(
+        `Insufficient token balance. User has ${
+          user.tokenHoldings[tokenHoldingIndex]?.balance || 0
+        } tokens`
+      );
+      res.status(400).json({
         message: `Insufficient ${stockCode} token balance`,
       });
+      return;
     }
 
-    // UPDATED: Transfer tokens back to treasury instead of burning
     console.log(
-      `Transferring ${amount} ${stockCode} tokens from user ${user.hederaAccountId} back to treasury`
+      `User has sufficient token balance: ${user.tokenHoldings[tokenHoldingIndex].balance}`
     );
 
-    try {
-      // Use the treasury account and key to sign the transfer
-      // This is a workaround since we don't have the user's actual private key
-      // In production, users would sign their own transactions
-      const transferReceipt = await tokenService.transferFromUserToTreasury(
-        token.tokenId,
-        user.hederaAccountId, // From user account
-        amount
-      );
-
-      // Create transaction record
-      const transaction = new Transaction({
-        userId: userId,
-        tokenId: token.tokenId,
-        stockCode,
-        amount,
-        type: TransactionType.BURN,
-        status: TransactionStatus.COMPLETED,
-        fee: 0,
-        paymentTokenId: "HBAR",
-        paymentAmount: 0,
-        hederaTransactionId: transferReceipt.transactionId?.toString(),
-      });
-
-      await transaction.save();
-
-      // Update the user's token holdings
-      user.tokenHoldings[tokenHoldingIndex].balance -= amount;
-
-      // Remove token holding if balance is zero
-      if (user.tokenHoldings[tokenHoldingIndex].balance === 0) {
-        user.tokenHoldings.splice(tokenHoldingIndex, 1);
-      }
-
-      // Update the user's stock holdings
-      const stockHoldingIndex = user.stockHoldings.findIndex(
-        (holding) => holding.stockCode === stockCode
-      );
-
-      if (stockHoldingIndex === -1) {
-        // This shouldn't happen normally, but just in case
-        console.warn(
-          `User ${userId} doesn't have ${stockCode} stock holdings, but had tokens`
+    // If transactionId is provided, verify the burn transaction
+    if (transactionId) {
+      try {
+        console.log("Verifying burn transaction...");
+        // Verify the burn transaction
+        const receipt = await tokenService.verifyUserBurnTransaction(
+          token.tokenId,
+          user.hederaAccountId,
+          amount,
+          transactionId
         );
-      } else {
-        // Reduce locked quantity
+
+        console.log(`Transaction verification result: ${receipt.status}`);
+
+        if (receipt.status !== "SUCCESS") {
+          console.log("Transaction verification failed");
+          res.status(400).json({
+            message: "Failed to verify burn transaction",
+          });
+          return;
+        }
+
+        console.log("Transaction verified successfully");
+
+        // Create transaction record
+        const transaction = new Transaction({
+          userId: userId,
+          tokenId: token.tokenId,
+          stockCode,
+          amount,
+          type: TransactionType.BURN,
+          status: TransactionStatus.COMPLETED,
+          fee: 0,
+          paymentTokenId: "HBAR",
+          paymentAmount: 0,
+          hederaTransactionId: transactionId,
+        });
+
+        await transaction.save();
+        console.log("Transaction record created");
+
+        // Update the user's token holdings
+        user.tokenHoldings[tokenHoldingIndex].balance -= amount;
+        await user.save();
+        console.log("User token holdings updated");
+
+        // Update token circulating supply
+        token.circulatingSupply -= amount;
+        await token.save();
+        console.log("Token circulating supply updated");
+
+        // Get updated stock holding information
+        const stockHoldingIndex = user.stockHoldings.findIndex(
+          (holding) => holding.stockCode === stockCode
+        );
+
+        if (stockHoldingIndex === -1) {
+          throw new Error(`Stock holding not found for ${stockCode}`);
+        }
+
+        // Update locked quantity (unlock the burned tokens)
         user.stockHoldings[stockHoldingIndex].lockedQuantity = Math.max(
           0,
           user.stockHoldings[stockHoldingIndex].lockedQuantity - amount
         );
+        await user.save();
         console.log(
-          `Unlocked ${amount} ${stockCode} shares, new locked amount: ${user.stockHoldings[stockHoldingIndex].lockedQuantity}`
+          `Updated locked quantity: ${user.stockHoldings[stockHoldingIndex].lockedQuantity}`
         );
+
+        const stockHolding = {
+          stockCode,
+          quantity: user.stockHoldings[stockHoldingIndex].quantity,
+          lockedQuantity: user.stockHoldings[stockHoldingIndex].lockedQuantity,
+          availableQuantity:
+            user.stockHoldings[stockHoldingIndex].quantity -
+            user.stockHoldings[stockHoldingIndex].lockedQuantity,
+        };
+
+        console.log("Burn process completed successfully");
+        res.json({
+          message: `Successfully burned ${amount} ${stockCode} tokens`,
+          transaction,
+          stockHolding,
+        });
+      } catch (error: any) {
+        console.error("Error verifying burn transaction:", error);
+        res.status(400).json({
+          message: `Failed to verify burn transaction: ${error.message}`,
+        });
       }
-
-      await user.save();
-
-      res.status(200).json({
-        message: `Successfully burned ${amount} ${stockCode} tokens`,
-        transaction: transaction,
-        stockHolding:
-          stockHoldingIndex !== -1
-            ? {
-                stockCode,
-                quantity: user.stockHoldings[stockHoldingIndex].quantity,
-                lockedQuantity:
-                  user.stockHoldings[stockHoldingIndex].lockedQuantity,
-                availableQuantity:
-                  user.stockHoldings[stockHoldingIndex].quantity -
-                  user.stockHoldings[stockHoldingIndex].lockedQuantity,
-              }
-            : null,
+    } else {
+      console.log("No transaction ID provided");
+      res.status(400).json({
+        message:
+          "Transaction ID is required. Please sign the burn transaction from the frontend.",
       });
-    } catch (error: any) {
-      console.error(
-        `Error transferring tokens back to treasury: ${error.message}`
-      );
-      throw new Error(`Failed to transfer tokens: ${error.message}`);
     }
   } catch (error: any) {
     console.error("Burn stock tokens error:", error);
-    res
-      .status(500)
-      .json({ message: "Error burning tokens", error: error.message });
+    res.status(500).json({
+      message: `Failed to burn tokens: ${error.message}`,
+    });
   }
 };
 
@@ -594,24 +634,24 @@ export const verifyUserBurnTransaction = async (
     );
 
     // Update the user's stock holdings to unlock the tokens
-    const stockHoldingIndex = user.stockHoldings.findIndex(
+    const initialStockHoldingIndex = user.stockHoldings.findIndex(
       (holding) => holding.stockCode === stockCode
     );
 
-    if (stockHoldingIndex === -1) {
+    if (initialStockHoldingIndex === -1) {
       return res.status(404).json({
         message: `You don't hold any ${stockCode} stock`,
       });
     }
 
     // Reduce locked quantity
-    user.stockHoldings[stockHoldingIndex].lockedQuantity = Math.max(
+    user.stockHoldings[initialStockHoldingIndex].lockedQuantity = Math.max(
       0,
-      user.stockHoldings[stockHoldingIndex].lockedQuantity - amount
+      user.stockHoldings[initialStockHoldingIndex].lockedQuantity - amount
     );
 
     console.log(
-      `Unlocked ${amount} ${stockCode} shares, new locked amount: ${user.stockHoldings[stockHoldingIndex].lockedQuantity}`
+      `Unlocked ${amount} ${stockCode} shares, new locked amount: ${user.stockHoldings[initialStockHoldingIndex].lockedQuantity}`
     );
 
     // Update the user's token holdings as well (if we're tracking them in the database)
@@ -648,18 +688,22 @@ export const verifyUserBurnTransaction = async (
 
     await transaction.save();
 
+    // Get final stock holding information for response
+    const stockHolding = {
+      stockCode,
+      quantity: user.stockHoldings[initialStockHoldingIndex].quantity,
+      lockedQuantity:
+        user.stockHoldings[initialStockHoldingIndex].lockedQuantity,
+      availableQuantity:
+        user.stockHoldings[initialStockHoldingIndex].quantity -
+        user.stockHoldings[initialStockHoldingIndex].lockedQuantity,
+    };
+
     // Return success
     res.status(200).json({
       message: `Successfully verified burn of ${amount} ${stockCode} tokens`,
       transaction: transaction,
-      stockHolding: {
-        stockCode,
-        quantity: user.stockHoldings[stockHoldingIndex].quantity,
-        lockedQuantity: user.stockHoldings[stockHoldingIndex].lockedQuantity,
-        availableQuantity:
-          user.stockHoldings[stockHoldingIndex].quantity -
-          user.stockHoldings[stockHoldingIndex].lockedQuantity,
-      },
+      stockHolding,
     });
   } catch (error: any) {
     console.error("Verify burn transaction error:", error);
@@ -667,5 +711,32 @@ export const verifyUserBurnTransaction = async (
       message: "Error verifying burn transaction",
       error: error.message,
     });
+  }
+};
+
+/**
+ * Get token by stock code
+ * @route GET /api/tokens/:stockCode
+ */
+export const getTokenByStockCode = async (req: Request, res: Response) => {
+  try {
+    const { stockCode } = req.params;
+    console.log(`Getting token for stock code: ${stockCode}`);
+
+    // Find the token
+    const token = await Token.findOne({ stockCode });
+
+    if (!token) {
+      console.log(`No token found for stock code: ${stockCode}`);
+      return res.status(404).json({
+        message: `No token exists for stock ${stockCode}`,
+      });
+    }
+
+    console.log(`Found token: ${token.tokenId} for stock ${stockCode}`);
+    res.status(200).json({ token });
+  } catch (error) {
+    console.error("Get token by stock code error:", error);
+    res.status(500).json({ message: "Error getting token", error });
   }
 };
