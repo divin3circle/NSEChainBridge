@@ -17,10 +17,10 @@ const HEDERA_OPERATOR_KEY = PrivateKey.fromStringECDSA(
 );
 const HEDERA_OPERATOR_ADDRESS = "0x4e6e8bc89523de1e65576136ce6863081ba30e52";
 const USDC_TOKEN_ID = "0.0.5791936";
-const KCB_TOKEN_ID = "0.0.5784604";
+const EQUITY_TOKEN_ID = "0.0.5784606";
 const ROUTER_CONTRACT_ID = "0.0.19264";
 const USDC_TOKEN_ADDRESS = "0x00000000000000000000000000000000005860c0";
-const KCB_TOKEN_ADDRESS = "0x000000000000000000000000000000000058441c";
+const EQUITY_TOKEN_ADDRESS = "0x000000000000000000000000000000000058441e";
 
 // Load environment variables
 dotenv.config({ path: '../.env' });
@@ -37,7 +37,7 @@ async function createPool(
     toEvmAddress, 
     deadline,
     poolCreationFeeHbar,
-    gasLim = 3_200_000
+    gasLim = 6_200_000
 ) {
     try {
         console.log(`Creating pool for tokens ${tokenAEvmAddress} and ${tokenBEvmAddress}...`);
@@ -110,6 +110,26 @@ async function increaseAutoAssociations(client, accountId, privateKey, count = 1
         throw error;
     }
 }
+// // Helper function to associate tokens if needed
+// async function associateTokenToAccount(client, accountId, privateKey, tokenId) {
+//   try {
+//     console.log(`Associating token ${tokenId} with account ${accountId}...`);
+    
+//     const transaction = new TokenAssociateTransaction()
+//       .setAccountId(accountId)
+//       .setTokenIds([tokenId]);
+      
+//     const signedTx = await transaction.freezeWith(client).sign(privateKey);
+//     const response = await signedTx.execute(client);
+//     const receipt = await response.getReceipt(client);
+    
+//     console.log(`Token association status: ${receipt.status}`);
+//     return receipt;
+//   } catch (error) {
+//     console.error('Error associating token:', error);
+//     throw error;
+//   }
+// }
 
 // Helper function to approve allowance for router contract
 async function approveAllowance(client, accountId, privateKey, tokenId, routerAddress, amount) {
@@ -145,9 +165,9 @@ async function main() {
         // Get other values from constants or use defaults
         const routerContractId = ROUTER_CONTRACT_ID;
         const tokenAId = USDC_TOKEN_ID;
-        const tokenBId = KCB_TOKEN_ID;
+        const tokenBId = EQUITY_TOKEN_ID;
         const tokenAAddress = USDC_TOKEN_ADDRESS;
-        const tokenBAddress = KCB_TOKEN_ADDRESS;
+        const tokenBAddress = EQUITY_TOKEN_ADDRESS;
         const myAccountAddress = HEDERA_OPERATOR_ADDRESS;
         
         // Example values - these would be set based on actual requirements
@@ -160,6 +180,8 @@ async function main() {
         
         // Increase max auto-associations to accommodate new LP token
         await increaseAutoAssociations(client, myAccountId, myPrivateKey, 1);
+
+        // await associateTokenToAccount(client, myAccountId, myPrivateKey, tokenBId);
         
         // Approve allowances
         await approveAllowance(client, myAccountId, myPrivateKey, tokenAId, routerContractId, amountADesired);
