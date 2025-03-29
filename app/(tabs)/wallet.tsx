@@ -73,7 +73,7 @@ const Wallet = () => {
 
   const { tokens } = useStocks();
 
-  const randomToken = tokens[Math.floor(Math.random() * tokens.length)];
+  let randomToken = tokens[Math.floor(Math.random() * tokens.length)];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -95,7 +95,7 @@ const Wallet = () => {
             style={{
               width: "50%",
               height: width * 0.6,
-              backgroundColor: "#fff",
+              backgroundColor: "#f6f7f9",
               borderRadius: 14,
               flexDirection: "column",
               justifyContent: "center",
@@ -159,7 +159,7 @@ const Wallet = () => {
             style={{
               width: "50%",
               height: width * 0.6,
-              backgroundColor: Colors.light.tint,
+              backgroundColor: "#e4e3e3",
               borderRadius: 14,
               flexDirection: "column",
               justifyContent: "center",
@@ -230,7 +230,7 @@ const Wallet = () => {
             style={{
               width: "50%",
               height: width * 0.6,
-              backgroundColor: "#f6f7f9",
+              backgroundColor: "#e4e3e3",
               borderRadius: 14,
               flexDirection: "column",
               justifyContent: "center",
@@ -288,72 +288,101 @@ const Wallet = () => {
               KSH
             </Text>
           </View>
-          <View
-            style={{
-              width: "50%",
-              height: width * 0.6,
-              backgroundColor: "#fff",
-              borderRadius: 14,
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              position: "relative",
-            }}
-          >
-            <Image
-              source={
-                randomToken?.image || require("../../assets/images/hbar.svg")
-              }
-              style={{
-                width: 70,
-                height: 70,
-                borderRadius: 35,
-                position: "absolute",
-                top: 20,
-                left: 20,
-              }}
-              placeholder={{ blurhash }}
-              contentFit="cover"
-              transition={1000}
-            />
-            <Text
-              style={{
-                fontFamily: fonts.semiBold,
-                marginTop: 14,
-                fontSize: 20,
-              }}
-            >
-              KES{" "}
-              {Number(
-                randomToken?.stockBlanace * randomToken?.dayPrice
-              ).toLocaleString() ||
-                myTokens[2].stockBlanace * myTokens[2].dayPrice}
-            </Text>
-            <Text
-              style={{
-                fontFamily: fonts.semiBold,
-                marginTop: 14,
-                fontSize: 16,
-                position: "absolute",
-                bottom: 20,
-                left: 20,
-                color: randomToken?.change < 0 ? "#D92A2A" : "#19AF00",
-              }}
-            >
-              {randomToken?.changePercentage || myTokens[2].changePercentage} %
-            </Text>
-            <Text
-              style={{
-                fontFamily: fonts.regular,
-                fontSize: 18,
-                position: "absolute",
-                bottom: 45,
-                left: 20,
-              }}
-            >
-              {" "}
-              {randomToken?.code || myTokens[2].code}
-            </Text>
+          <View>
+            {randomToken && (
+              <View
+                style={{
+                  width: "50%",
+                  height: width * 0.6,
+                  backgroundColor: "#fff",
+                  borderRadius: 14,
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  position: "relative",
+                }}
+              >
+                <Image
+                  source={
+                    randomToken?.image ||
+                    require("../../assets/images/hbar.svg")
+                  }
+                  style={{
+                    width: 70,
+                    height: 70,
+                    borderRadius: 35,
+                    position: "absolute",
+                    top: 20,
+                    left: 20,
+                  }}
+                  placeholder={{ blurhash }}
+                  contentFit="cover"
+                  transition={1000}
+                />
+                <Text
+                  style={{
+                    fontFamily: fonts.semiBold,
+                    marginTop: 14,
+                    fontSize: 20,
+                  }}
+                >
+                  KES{" "}
+                  {Number(
+                    randomToken?.stockBlanace * randomToken?.dayPrice
+                  ).toLocaleString()}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: fonts.semiBold,
+                    marginTop: 14,
+                    fontSize: 16,
+                    position: "absolute",
+                    bottom: 20,
+                    left: 20,
+                    color: randomToken?.change < 0 ? "#D92A2A" : "#19AF00",
+                  }}
+                >
+                  {randomToken?.changePercentage ||
+                    myTokens[2].changePercentage}{" "}
+                  %
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: fonts.regular,
+                    fontSize: 18,
+                    position: "absolute",
+                    bottom: 45,
+                    left: 20,
+                  }}
+                >
+                  {" "}
+                  {randomToken?.code || myTokens[2].code}
+                </Text>
+              </View>
+            )}
+            {!randomToken && (
+              <View
+                style={{
+                  height: width * 0.6,
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderRadius: 14,
+                  width: width * 0.48,
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: fonts.semiBold,
+                    fontSize: 14,
+                    color: Colors.light.subtitles,
+                    textAlign: "center",
+                  }}
+                >
+                  Mint some tokens
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
