@@ -80,7 +80,7 @@ const Create = () => {
         setAccountDetails({
           accountId,
           publicKey,
-          balance: "25.0", // Initial HBAR balance
+          balance: "10.0", // Initial HBAR balance
         });
         setAccountStatus("created");
       } else {
