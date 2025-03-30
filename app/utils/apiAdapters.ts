@@ -55,6 +55,7 @@ const TOKEN_IMAGES: Record<string, any> = {
   EABL: require("../../assets/images/eabl.webp"),
   HBAR: require("../../assets/images/hbar.svg"),
   KSH: require("../../assets/images/ksh.svg"),
+  USDC: require("../../assets/images/usdc.png"),
 };
 
 const TOKEN_GRAPHS: Record<string, any> = {
@@ -62,6 +63,7 @@ const TOKEN_GRAPHS: Record<string, any> = {
   EQTY: require("../../assets/images/eqty.svg"),
   SCOM: require("../../assets/images/scom.svg"),
   EABL: require("../../assets/images/eabl.svg"),
+  USDC: require("../../assets/images/scom.svg"),
 };
 
 /**

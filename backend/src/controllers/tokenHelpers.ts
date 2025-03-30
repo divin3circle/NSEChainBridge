@@ -70,6 +70,7 @@ export const updateUserTokenBalance = async (
         user.tokenHoldings.push({
           tokenId: token.tokenId,
           balance: amount,
+          lockedQuantity: 0,
         });
       } else {
         throw new Error(`User does not hold any ${stockCode} tokens`);
@@ -93,6 +94,52 @@ export const updateUserTokenBalance = async (
     await user.save();
   } catch (error) {
     console.error("Error updating user token balance:", error);
+    throw error;
+  }
+};
+
+/**
+ * Deduct HBAR fees from user's token holdings
+ * @param userId User ID
+ * @param feeAmount Amount of HBAR to deduct for fees
+ */
+export const deductHbarFees = async (
+  userId: string,
+  feeAmount: number
+): Promise<void> => {
+  try {
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Find HBAR token holding
+    const hbarHoldingIndex = user.tokenHoldings.findIndex(
+      (holding) => holding.tokenId === "HBAR"
+    );
+
+    if (hbarHoldingIndex === -1) {
+      throw new Error("User does not hold any HBAR tokens");
+    }
+
+    // Update HBAR balance
+    const newBalance = user.tokenHoldings[hbarHoldingIndex].balance - feeAmount;
+
+    if (newBalance < 0) {
+      throw new Error("Insufficient HBAR balance for fees");
+    }
+
+    user.tokenHoldings[hbarHoldingIndex].balance = newBalance;
+
+    // Remove token holding if balance is zero
+    if (user.tokenHoldings[hbarHoldingIndex].balance === 0) {
+      user.tokenHoldings.splice(hbarHoldingIndex, 1);
+    }
+
+    await user.save();
+  } catch (error) {
+    console.error("Error deducting HBAR fees:", error);
     throw error;
   }
 };

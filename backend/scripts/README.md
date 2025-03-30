@@ -53,4 +53,4 @@ If you encounter module import errors, make sure:
 
 1. Your TypeScript files are properly compiled to JavaScript in the `dist` folder
 2. The path to the imported modules is correct
-3. You're using Node.js version 14 or higher
+3. You're using Node version 14 or higher

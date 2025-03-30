@@ -74,6 +74,7 @@ export const buyTokens = async (req: Request, res: Response) => {
       user.tokenHoldings.push({
         tokenId,
         balance: amount,
+        lockedQuantity: 0,
       });
     } else {
       user.tokenHoldings[tokenHoldingIndex].balance += amount;

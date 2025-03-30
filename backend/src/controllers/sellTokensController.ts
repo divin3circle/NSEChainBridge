@@ -5,8 +5,26 @@ import Transaction, {
   TransactionType,
   TransactionStatus,
 } from "../models/Transaction";
-import tokenService from "../services/tokenService";
-import saucerSwapService from "../services/saucerSwapService";
+import {
+  swapExactTokensForTokens,
+  approveAllowance,
+  associateTokenToAccount,
+} from "../../scripts/swapTokens.js";
+import { Client, AccountId, PrivateKey } from "@hashgraph/sdk";
+import { deductHbarFees } from "./tokenHelpers";
+
+const USDC_TOKEN_ID = "0.0.5791936";
+const USDC_TOKEN_ADDRESS = "0x00000000000000000000000000000000005860c0";
+const ROUTER_CONTRACT_ID = "0.0.19264";
+
+// Helper function to convert token ID to EVM address
+function tokenIdToEvmAddress(tokenId: string): string {
+  // Remove the '0.0.' prefix and convert to hex
+  const numericId = tokenId.split(".")[2];
+  // Ensure exactly 40 characters (20 bytes) for the address
+  const hexId = parseInt(numericId).toString(16).toLowerCase();
+  return `0x${hexId.padStart(40, "0")}`;
+}
 
 /**
  * Sell tokens for USDC using SaucerSwap
@@ -17,36 +35,29 @@ import saucerSwapService from "../services/saucerSwapService";
 export const sellTokensForUsdc = async (req: Request, res: Response) => {
   try {
     const { stockCode } = req.params;
-    const { amount } = req.body;
+    const { amount, accountId, privateKey } = req.body;
     const userId = req.user.id;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ message: "Amount must be greater than 0" });
     }
 
+    if (!accountId || !privateKey) {
+      return res.status(400).json({ message: "Account credentials required" });
+    }
+
     // Get the stock token
-    const stockToken = await tokenService.getTokenByStockCode(stockCode);
+    const stockToken = await Token.findOne({ stockCode });
     if (!stockToken) {
       return res
         .status(404)
         .json({ message: `Token for stock ${stockCode} not found` });
     }
 
-    // Get the USDC token
-    const usdcToken = await tokenService.getTokenByStockCode("USDC");
-    if (!usdcToken) {
-      return res.status(404).json({ message: "USDC token not found" });
-    }
-
+    // Get user and verify token balance
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
-    }
-
-    if (!user.hederaAccountId) {
-      return res
-        .status(400)
-        .json({ message: "User does not have a Hedera account" });
     }
 
     const tokenHolding = user.tokenHoldings.find(
@@ -61,58 +72,110 @@ export const sellTokensForUsdc = async (req: Request, res: Response) => {
       });
     }
 
-    // Calculate minimum USDC to receive based on stock price
-    const stockPriceUSD = stockToken.metadata.stockPrice || 0;
-    const minUsdcAmount = Math.floor(stockPriceUSD * amount * 0.99); // 1% slippage
-
     try {
-      // 1. Associate USDC token with user's account if not already associated
+      // Initialize Hedera client with user's credentials
+      const client = Client.forTestnet();
+      const userAccountId = AccountId.fromString(accountId);
+      const userPrivateKey = PrivateKey.fromStringDer(privateKey);
+      client.setOperator(userAccountId, userPrivateKey);
+
+      console.log("Setting up token allowance for router...");
+
+      // Associate the stock token to the user's account
       try {
-        await saucerSwapService.associateTokenForSwap(
-          usdcToken.tokenId,
-          user.hederaAccountId,
-          userId
+        console.log("Associating stock token to account...", userAccountId);
+        await associateTokenToAccount(
+          client,
+          userAccountId,
+          userPrivateKey,
+          stockToken.tokenId
+        );
+        await associateTokenToAccount(
+          client,
+          userAccountId,
+          userPrivateKey,
+          USDC_TOKEN_ID
         );
       } catch (error: any) {
-        // If the error is that the token is already associated, we can continue
-        if (error.message.includes("TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT")) {
-          console.log("Token already associated with account, continuing...");
-        } else {
-          // If it's a different error, throw it
-          throw error;
-        }
+        console.log(
+          "Token likely already associated or error occurred:",
+          error.message
+        );
       }
 
-      // 2. Approve SaucerSwap to spend the stock tokens
-      await saucerSwapService.approveTokenSpending(
+      // Approve allowance for the router contract before swap
+      console.log(
+        "Approving allowance for the router contract...",
+        userAccountId
+      );
+      await approveAllowance(
+        client,
+        userAccountId,
+        userPrivateKey,
         stockToken.tokenId,
-        amount,
-        user.hederaAccountId,
-        userId
+        ROUTER_CONTRACT_ID,
+        amount * 1.1
       );
 
-      // 3. Execute the swap
-      const swapResult = await saucerSwapService.swapExactTokensForTokens(
+      console.log("Token allowance approved. Proceeding with swap...");
+
+      // Calculate minimum USDC to receive based on stock price (0.3 USDC per token)
+      const minUsdcAmount = 0; // 1% slippage
+
+      // Convert token IDs to EVM addresses for the swap path
+      const stockTokenAddress = tokenIdToEvmAddress(stockToken.tokenId);
+      const accountAddress = tokenIdToEvmAddress(userAccountId.toString());
+
+      // Execute the swap with EVM addresses
+      console.log("Executing the swap...", accountAddress);
+      const swapResult = await swapExactTokensForTokens(
+        client,
+        ROUTER_CONTRACT_ID,
         amount,
         minUsdcAmount,
-        [stockToken.tokenId, usdcToken.tokenId],
-        user.hederaAccountId,
-        Math.floor(Date.now() / 1000) + 300 // 5 minutes deadline
+        [stockTokenAddress, USDC_TOKEN_ADDRESS],
+        accountAddress,
+        Math.floor(Date.now() / 1000) + 600 // 10 minutes deadline
       );
 
-      // 4. Update user's token holdings
+      // Update user's token holdings
+      // Subtract the sold tokens from both balance and lockedQuantity
       const tokenHoldingIndex = user.tokenHoldings.findIndex(
         (holding) => holding.tokenId === stockToken.tokenId
       );
       user.tokenHoldings[tokenHoldingIndex].balance -= amount;
+      user.tokenHoldings[tokenHoldingIndex].lockedQuantity = Math.max(
+        0,
+        user.tokenHoldings[tokenHoldingIndex].lockedQuantity - amount
+      );
 
       if (user.tokenHoldings[tokenHoldingIndex].balance <= 0) {
         user.tokenHoldings.splice(tokenHoldingIndex, 1);
       }
 
+      // Add the received USDC
+      const usdcAmount = parseFloat(swapResult.outputAmount);
+      const usdcHoldingIndex = user.tokenHoldings.findIndex(
+        (holding) => holding.tokenId === USDC_TOKEN_ID
+      );
+
+      // Deduct HBAR fees (0.1% of transaction value)
+      const estimatedFee = (usdcAmount * 0.001) / 24.51; // Convert USDC to HBAR
+      await deductHbarFees(userId, estimatedFee);
+
+      if (usdcHoldingIndex >= 0) {
+        user.tokenHoldings[usdcHoldingIndex].balance += usdcAmount;
+      } else {
+        user.tokenHoldings.push({
+          tokenId: USDC_TOKEN_ID,
+          balance: usdcAmount,
+          lockedQuantity: 0,
+        });
+      }
+
       await user.save();
 
-      // 5. Create transaction record
+      // Create transaction record
       const transaction = new Transaction({
         userId,
         tokenId: stockToken.tokenId,
@@ -121,18 +184,33 @@ export const sellTokensForUsdc = async (req: Request, res: Response) => {
         status: TransactionStatus.COMPLETED,
         amount,
         fee: 0,
-        paymentTokenId: usdcToken.tokenId,
-        paymentAmount: swapResult.finalOutputAmount,
+        paymentTokenId: USDC_TOKEN_ID,
+        paymentAmount: usdcAmount,
         hederaTransactionId: swapResult.transactionId,
       });
       await transaction.save();
 
       res.status(200).json({
-        message: `Successfully swapped ${amount} ${stockCode} tokens for ${swapResult.finalOutputAmount} USDC`,
+        message: `Successfully swapped ${amount} ${stockCode} tokens for ${usdcAmount} USDC`,
         stockCode,
         tokensSold: amount,
-        usdcReceived: swapResult.finalOutputAmount,
+        usdcReceived: usdcAmount,
         transactionId: transaction._id,
+        hederaTransactionId: swapResult.transactionId,
+        stockHolding: {
+          availableQuantity:
+            user.tokenHoldings[tokenHoldingIndex]?.balance || 0,
+          lockedQuantity:
+            user.tokenHoldings[tokenHoldingIndex]?.lockedQuantity || 0,
+        },
+        transaction: {
+          hederaTransactionId: swapResult.transactionId,
+          fee: 0,
+          paymentAmount: usdcAmount,
+          type: TransactionType.SELL,
+          status: TransactionStatus.COMPLETED,
+          timestamp: transaction.createdAt,
+        },
       });
     } catch (error: any) {
       console.error("Error executing swap:", error);

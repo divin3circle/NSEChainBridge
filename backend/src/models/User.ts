@@ -17,6 +17,7 @@ export interface IUser extends Document {
   tokenHoldings: {
     tokenId: string;
     balance: number;
+    lockedQuantity: number; // Amount locked for tokens
   }[];
   createdAt: Date;
   updatedAt: Date;
@@ -89,6 +90,11 @@ const UserSchema: Schema = new Schema(
           type: Number,
           required: true,
           default: 0,
+        },
+        lockedQuantity: {
+          type: Number,
+          default: 0,
+          required: true,
         },
       },
     ],

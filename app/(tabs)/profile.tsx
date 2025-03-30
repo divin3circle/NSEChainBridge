@@ -6,15 +6,39 @@ import {
   Dimensions,
   TouchableOpacity,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Image } from "expo-image";
 import { blurhash, Colors, fonts } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import TextLine from "@/components/TextLine";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
+interface User {
+  _id: string;
+  email: string;
+  name: string;
+  hederaAccountId?: string;
+  privateKey?: string;
+}
 
 const Profile = () => {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchLocalUserData = async () => {
+      try {
+        // Fetch user data
+        const user = await AsyncStorage.getItem("user");
+        if (user) {
+          setUser(JSON.parse(user));
+        }
+      } catch (error) {
+        console.error("Error fetching wallet details:", error);
+      }
+    };
+    fetchLocalUserData();
+  }, []);
   return (
     <SafeAreaView style={styles.container}>
       <View
@@ -48,7 +72,7 @@ const Profile = () => {
                 fontSize: 20,
               }}
             >
-              Sylus Abel
+              {user?.name}
             </Text>
             <Text
               style={{
@@ -58,7 +82,7 @@ const Profile = () => {
                 color: Colors.light.subtitles,
               }}
             >
-              sylusabel1@gmail.com
+              {user?.email}
             </Text>
           </View>
         </View>

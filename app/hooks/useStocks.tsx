@@ -94,6 +94,7 @@ export function useStocks() {
 
       if (user.tokens && user.tokens.length > 0) {
         user.tokens.forEach((token) => {
+          console.log("token", token);
           let tokenData = myTokens.find((t) => t.code === token.symbol);
 
           if (token.stockCode) {
@@ -111,6 +112,7 @@ export function useStocks() {
             } else if (stockData) {
               userTokens.push({
                 ...stockData,
+                name: token.name === "UNKNOWN" ? "HBAR" : token.name,
                 stockBlanace: token.balance,
                 tokenId: token.tokenId,
               } as EnhancedMyTokens);
@@ -119,14 +121,15 @@ export function useStocks() {
             // For non-stock tokens like HBAR or KSH
             userTokens.push({
               ...tokenData,
+              name: token.name === "UNKNOWN" ? "HBAR" : token.name,
               stockBlanace: token.balance,
               tokenId: token.tokenId,
             } as EnhancedMyTokens);
           } else {
             userTokens.push({
               code: token.symbol,
-              name: token.name,
-              image: require("../../assets/images/token-placeholder.png"),
+              name: token.name === "UNKNOWN" ? "HBAR" : token.name,
+              image: require("../../assets/images/hbar.svg"),
               stockBlanace: token.balance,
               tokenId: token.tokenId,
               dayPrice: 0,
@@ -140,7 +143,7 @@ export function useStocks() {
               volume: 0,
               adjust: 0,
               date: new Date().toISOString(),
-              moverGraph: require("../../assets/images/token-placeholder.png"),
+              moverGraph: require("../../assets/images/eabl.png"),
               kesBalance: 0,
             } as EnhancedMyTokens);
           }

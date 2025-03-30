@@ -7,7 +7,11 @@ import Transaction, {
 } from "../models/Transaction";
 import tokenService from "../services/tokenService";
 import accountService from "../services/accountService";
-import { getUserTokenBalance, updateUserTokenBalance } from "./tokenHelpers";
+import {
+  getUserTokenBalance,
+  updateUserTokenBalance,
+  deductHbarFees,
+} from "./tokenHelpers";
 
 /**
  * Get all tokens
@@ -192,10 +196,15 @@ export const mintStockTokens = async (req: Request, res: Response) => {
       (holding) => holding.tokenId === token.tokenId
     );
 
+    // Deduct HBAR fees (0.1% of transaction value)
+    const estimatedFee = (amount * 0.001) / 24.51; // Convert to HBAR
+    await deductHbarFees(userId, estimatedFee);
+
     if (tokenHoldingIndex === -1) {
       user.tokenHoldings.push({
         tokenId: token.tokenId,
         balance: amount,
+        lockedQuantity: 0,
       });
     } else {
       user.tokenHoldings[tokenHoldingIndex].balance += amount;
@@ -352,6 +361,10 @@ export const burnStockTokens = async (req: Request, res: Response) => {
 
         await transaction.save();
         console.log("Transaction record created");
+
+        // Deduct HBAR fees (0.1% of transaction value)
+        const estimatedFee = (amount * 0.001) / 24.51; // Convert to HBAR
+        await deductHbarFees(userId, estimatedFee);
 
         // Update the user's token holdings
         user.tokenHoldings[tokenHoldingIndex].balance -= amount;
@@ -687,6 +700,10 @@ export const verifyUserBurnTransaction = async (
     });
 
     await transaction.save();
+
+    // Deduct HBAR fees (0.1% of transaction value)
+    const estimatedFee = (amount * 0.001) / 24.51; // Convert to HBAR
+    await deductHbarFees(userId, estimatedFee);
 
     // Get final stock holding information for response
     const stockHolding = {
