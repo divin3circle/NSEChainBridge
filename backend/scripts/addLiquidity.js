@@ -16,10 +16,10 @@ const HEDERA_OPERATOR_KEY=PrivateKey.fromStringECDSA(
 );
 const HEDERA_OPERATOR_ADDRESS="0x4e6e8bc89523de1e65576136ce6863081ba30e52"
 const USDC_TOKEN_ID="0.0.5791936"
-const KCB_TOKEN_ID="0.0.5784604"
+const EQUITY_TOKEN_ID="0.0.5784605"
 const ROUTER_CONTRACT_ID="0.0.19264"
 const USDC_TOKEN_ADDRESS="0x00000000000000000000000000000000005860c0"
-const KCB_TOKEN_ADDRESS="0x000000000000000000000000000000000058441c"
+const EQUITY_TOKEN_ADDRESS="0x000000000000000000000000000000000058441d"
 
 
 
@@ -151,17 +151,17 @@ async function main() {
     
     // Get other values from environment or use defaults
     const routerContractId = ROUTER_CONTRACT_ID;
-    const tokenAId = USDC_TOKEN_ID;
-    const tokenBId = KCB_TOKEN_ID;
-    const tokenAAddress = USDC_TOKEN_ADDRESS;
-    const tokenBAddress = KCB_TOKEN_ADDRESS;
+    const tokenAId = EQUITY_TOKEN_ID;
+    const tokenBId = USDC_TOKEN_ID;
+    const tokenAAddress = EQUITY_TOKEN_ADDRESS;
+    const tokenBAddress = USDC_TOKEN_ADDRESS;
     const myAccountAddress = HEDERA_OPERATOR_ADDRESS;
     
     // Example values - these would be set based on actual requirements
-    const amountADesired = 1;
+    const amountADesired = 600_000;
     const amountBDesired = 300_000;
-    const amountAMin = 1;
-    const amountBMin = 200_00;
+    const amountAMin = 100_000;
+    const amountBMin = 50_000;
     const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes from now
     
     // Ensure tokens are associated

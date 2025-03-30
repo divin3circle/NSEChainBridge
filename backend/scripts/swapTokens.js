@@ -129,6 +129,25 @@ async function associateTokenToAccount(client, accountId, privateKey, tokenId) {
     throw error;
   }
 }
+// async function associateTokenToAccount(client, accountId, privateKey, tokenId) {
+//   try {
+//     console.log(`Associating token ${tokenId} with account ${accountId}...`);
+    
+//     const transaction = new TokenAssociateTransaction()
+//       .setAccountId(accountId)
+//       .setTokenIds([tokenId]);
+      
+//     const signedTx = await transaction.freezeWith(client).sign(privateKey);
+//     const response = await signedTx.execute(client);
+//     const receipt = await response.getReceipt(client);
+    
+//     console.log(`Token association status: ${receipt.status}`);
+//     return receipt;
+//   } catch (error) {
+//     console.error('Error associating token:', error);
+//     throw error;
+//   }
+// }
 
 /**
  * Helper function to approve allowance for router contract
@@ -196,6 +215,7 @@ async function main() {
 
     // Example values - these would be set based on actual requirements
     const amountIn = 50; // 1 USDC (assuming 6 decimals)
+
     const amountOutMin = 0; // Minimum amount expected back
     const tokenPath = [fromTokenAddress, toTokenAddress]; // Direct swap path
     const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes from now
@@ -257,3 +277,4 @@ module.exports = {
   associateTokenToAccount,
   approveAllowance,
 };
+
