@@ -116,11 +116,9 @@ export const createHederaAccount = async (req: Request, res: Response) => {
     // Create Hedera account
     let accountInfo;
     try {
-      // Try using hederaService first (which has better mock support)
       const hederaService = (await import("../services/hederaService")).default;
       accountInfo = await hederaService.createAccount();
     } catch (error) {
-      // Fall back to accountService if hederaService fails
       console.warn(
         "Falling back to accountService for account creation:",
         error

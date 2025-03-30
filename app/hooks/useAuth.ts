@@ -137,7 +137,6 @@ export function useAuth() {
         data.privateKey,
         data.publicKey
       );
-      router.replace("/(tabs)");
     },
   });
 

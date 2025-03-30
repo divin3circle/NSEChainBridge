@@ -6,15 +6,15 @@ import Transaction, {
   TransactionStatus,
 } from "../models/Transaction";
 import tokenService from "../services/tokenService";
-import accountService from "../services/accountService";
+import saucerSwapService from "../services/saucerSwapService";
 
 /**
- * Sell tokens for HBAR
- * This function allows users to sell their tokens for HBAR based on the token's price in KES
+ * Sell tokens for USDC using SaucerSwap
+ * This function allows users to swap their stock tokens for USDC
  * @route POST /api/tokens/:stockCode/sell
  * @access Private
  */
-export const sellTokensForHbar = async (req: Request, res: Response) => {
+export const sellTokensForUsdc = async (req: Request, res: Response) => {
   try {
     const { stockCode } = req.params;
     const { amount } = req.body;
@@ -24,15 +24,20 @@ export const sellTokensForHbar = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Amount must be greater than 0" });
     }
 
-    // Check if token exists
-    const token = await tokenService.getTokenByStockCode(stockCode);
-    if (!token) {
+    // Get the stock token
+    const stockToken = await tokenService.getTokenByStockCode(stockCode);
+    if (!stockToken) {
       return res
         .status(404)
         .json({ message: `Token for stock ${stockCode} not found` });
     }
 
-    // Get user information
+    // Get the USDC token
+    const usdcToken = await tokenService.getTokenByStockCode("USDC");
+    if (!usdcToken) {
+      return res.status(404).json({ message: "USDC token not found" });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -44,9 +49,8 @@ export const sellTokensForHbar = async (req: Request, res: Response) => {
         .json({ message: "User does not have a Hedera account" });
     }
 
-    // Find the user's token holding
     const tokenHolding = user.tokenHoldings.find(
-      (holding) => holding.tokenId === token.tokenId
+      (holding) => holding.tokenId === stockToken.tokenId
     );
 
     if (!tokenHolding || tokenHolding.balance < amount) {
@@ -57,63 +61,86 @@ export const sellTokensForHbar = async (req: Request, res: Response) => {
       });
     }
 
-    // Calculate HBAR value based on token price
-    // Formula: (token price in KES / HBAR price in KES) * amount
-    const HBAR_PRICE_KES = 24.51; // Get this from a service or config
-    const tokenPriceKES = token.metadata.stockPrice || 0;
+    // Calculate minimum USDC to receive based on stock price
+    const stockPriceUSD = stockToken.metadata.stockPrice || 0;
+    const minUsdcAmount = Math.floor(stockPriceUSD * amount * 0.99); // 1% slippage
 
-    // Calculate how many HBAR to transfer to the user
-    const hbarAmount = (tokenPriceKES / HBAR_PRICE_KES) * amount;
+    try {
+      // 1. Associate USDC token with user's account if not already associated
+      try {
+        await saucerSwapService.associateTokenForSwap(
+          usdcToken.tokenId,
+          user.hederaAccountId,
+          userId
+        );
+      } catch (error: any) {
+        // If the error is that the token is already associated, we can continue
+        if (error.message.includes("TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT")) {
+          console.log("Token already associated with account, continuing...");
+        } else {
+          // If it's a different error, throw it
+          throw error;
+        }
+      }
 
-    // 1. Burn the tokens
-    await tokenService.burnTokens(token.tokenId, amount);
+      // 2. Approve SaucerSwap to spend the stock tokens
+      await saucerSwapService.approveTokenSpending(
+        stockToken.tokenId,
+        amount,
+        user.hederaAccountId,
+        userId
+      );
 
-    // 2. Update user's token balance
-    const tokenHoldingIndex = user.tokenHoldings.findIndex(
-      (holding) => holding.tokenId === token.tokenId
-    );
+      // 3. Execute the swap
+      const swapResult = await saucerSwapService.swapExactTokensForTokens(
+        amount,
+        minUsdcAmount,
+        [stockToken.tokenId, usdcToken.tokenId],
+        user.hederaAccountId,
+        Math.floor(Date.now() / 1000) + 300 // 5 minutes deadline
+      );
 
-    user.tokenHoldings[tokenHoldingIndex].balance -= amount;
+      // 4. Update user's token holdings
+      const tokenHoldingIndex = user.tokenHoldings.findIndex(
+        (holding) => holding.tokenId === stockToken.tokenId
+      );
+      user.tokenHoldings[tokenHoldingIndex].balance -= amount;
 
-    // If balance is now zero, consider removing the holding completely
-    if (user.tokenHoldings[tokenHoldingIndex].balance <= 0) {
-      user.tokenHoldings.splice(tokenHoldingIndex, 1);
+      if (user.tokenHoldings[tokenHoldingIndex].balance <= 0) {
+        user.tokenHoldings.splice(tokenHoldingIndex, 1);
+      }
+
+      await user.save();
+
+      // 5. Create transaction record
+      const transaction = new Transaction({
+        userId,
+        tokenId: stockToken.tokenId,
+        stockCode,
+        type: TransactionType.SELL,
+        status: TransactionStatus.COMPLETED,
+        amount,
+        fee: 0,
+        paymentTokenId: usdcToken.tokenId,
+        paymentAmount: swapResult.finalOutputAmount,
+        hederaTransactionId: swapResult.transactionId,
+      });
+      await transaction.save();
+
+      res.status(200).json({
+        message: `Successfully swapped ${amount} ${stockCode} tokens for ${swapResult.finalOutputAmount} USDC`,
+        stockCode,
+        tokensSold: amount,
+        usdcReceived: swapResult.finalOutputAmount,
+        transactionId: transaction._id,
+      });
+    } catch (error: any) {
+      console.error("Error executing swap:", error);
+      res.status(500).json({
+        message: "Failed to execute swap",
+        error: error.message,
+      });
     }
-
-    await user.save();
-
-    // 3. Transfer HBAR to user
-    const transferResult = await accountService.transferHbar(
-      user.hederaAccountId,
-      hbarAmount
-    );
-
-    // 4. Create transaction record
-    const transaction = new Transaction({
-      userId,
-      tokenId: token.tokenId,
-      stockCode,
-      type: TransactionType.SELL,
-      status: TransactionStatus.COMPLETED,
-      amount,
-      fee: 0,
-      paymentTokenId: "HBAR",
-      paymentAmount: hbarAmount,
-      hederaTransactionId: transferResult.transactionId?.toString(),
-    });
-    await transaction.save();
-
-    res.status(200).json({
-      message: `Successfully sold ${amount} ${stockCode} tokens for ${hbarAmount.toFixed(
-        8
-      )} HBAR`,
-      stockCode,
-      tokensSold: amount,
-      hbarReceived: hbarAmount,
-      hbarPrice: HBAR_PRICE_KES,
-      tokenPrice: tokenPriceKES,
-      transactionId: transaction._id,
-    });
   } catch (error: any) {
     console.error("Error selling tokens:", error);
     res.status(500).json({ message: error.message });
