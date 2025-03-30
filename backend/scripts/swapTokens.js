@@ -16,7 +16,7 @@ params.addAddressArray([
   "0x00000000000000000000000000000000005860c0",
 ]);
 params.addAddress("0x4e6e8bc89523de1e65576136ce6863081ba30e52");
-params.addUint256(176849447898);
+params.addUint256(0);
 
 async function executeSwap(client, routerContractId, gasLim) {
   const record = await new ContractExecuteTransaction()
