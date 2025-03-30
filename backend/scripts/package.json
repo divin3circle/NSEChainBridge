@@ -7,5 +7,9 @@
   "scripts": {
     "update-prices": "node updateStockPrices.js",
     "populate-holdings": "node populateHoldings.js"
+  },
+  "dependencies": {
+    "@hashgraph/sdk": "^2.61.0",
+    "dotenv": "^16.4.7"
   }
 }

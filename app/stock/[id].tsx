@@ -57,8 +57,50 @@ const StockScreen = () => {
 
   if (!stock || !stats) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text>Stock not found</Text>
+      <SafeAreaView
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: fonts.semiBold,
+            fontSize: 18,
+            color: Colors.light.titles,
+          }}
+        >
+          Stock not found
+        </Text>
+        <Text
+          style={{
+            fontFamily: fonts.regular,
+            fontSize: 14,
+            color: Colors.light.subtitles,
+          }}
+        >
+          You currently don't have this stock in your portfolio
+        </Text>
+        <TouchableOpacity
+          style={{
+            backgroundColor: Colors.light.primary,
+            padding: 12,
+            borderRadius: 10,
+            marginTop: 16,
+          }}
+          onPress={() => router.navigate("/(tabs)")}
+        >
+          <Text
+            style={{
+              fontFamily: fonts.semiBold,
+              fontSize: 14,
+              color: "#fff",
+            }}
+          >
+            Go back
+          </Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
