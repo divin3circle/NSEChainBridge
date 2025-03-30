@@ -158,10 +158,10 @@ async function main() {
     const myAccountAddress = HEDERA_OPERATOR_ADDRESS;
     
     // Example values - these would be set based on actual requirements
-    const amountADesired = 100000;
-    const amountBDesired = 200000;
-    const amountAMin = 95000;
-    const amountBMin = 190000;
+    const amountADesired = 1;
+    const amountBDesired = 300_000;
+    const amountAMin = 1;
+    const amountBMin = 200_00;
     const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes from now
     
     // Ensure tokens are associated
