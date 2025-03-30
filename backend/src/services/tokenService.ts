@@ -607,6 +607,10 @@ class TokenService {
 
       console.log("Executed token transfer transaction");
 
+      // Get the transaction ID before getting the receipt
+      const transactionId = txResponse.transactionId.toString();
+      console.log(`Transaction ID: ${transactionId}`);
+
       // Get the receipt
       const receipt = await txResponse.getReceipt(client);
 
@@ -615,7 +619,7 @@ class TokenService {
       console.log(
         `Successfully transferred ${amount} tokens from ${senderAccountId} to ${receiverAccountId}`
       );
-      return receipt;
+      return { ...receipt, transactionId };
     } catch (error: any) {
       console.error("Error transferring tokens:", error.message);
       throw error;

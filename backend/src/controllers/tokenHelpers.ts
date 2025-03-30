@@ -143,3 +143,61 @@ export const deductHbarFees = async (
     throw error;
   }
 };
+
+/**
+ * Get actual transaction fees from Hedera network using Mirror Node API
+ * @param transactionId Hedera transaction ID in format "0.0.5483001@1743355957.262204869"
+ * @returns Actual fee in HBAR
+ */
+export const getTransactionFees = async (
+  transactionId: string
+): Promise<number> => {
+  try {
+    if (!transactionId) {
+      console.error("No transaction ID provided");
+      return 0; // Return 0 fee if no transaction ID
+    }
+
+    // Format transaction ID for Mirror Node API
+    // Convert from "0.0.5483001@1743355957.262204869" to "0.0.5483001-1743355957-262204869"
+    const [accountId, timestamp] = transactionId.split("@");
+    const formattedTimestamp = timestamp.replace(".", "-");
+    const formattedTxId = `${accountId}-${formattedTimestamp}`;
+
+    console.log("Fetching fees for transaction:", formattedTxId);
+
+    // Use Hedera Mirror Node REST API
+    const response = await fetch(
+      `https://testnet.mirrornode.hedera.com/api/v1/transactions/${formattedTxId}`
+    );
+
+    if (!response.ok) {
+      console.error(`Failed to fetch transaction: ${response.statusText}`);
+      return 0; // Return 0 fee if API call fails
+    }
+
+    const data = await response.json();
+
+    // Check if we have valid fee data in charged_tx_fee
+    if (!data || !data.transactions) {
+      console.error("Invalid transaction data received:", data);
+      return 0;
+    }
+
+    const charged_tx_fee = data.transactions[0].charged_tx_fee;
+    if (typeof charged_tx_fee !== "number") {
+      console.error("Invalid charged_tx_fee:", charged_tx_fee);
+      return 0;
+    }
+
+    // Convert tinybars to HBAR (1 HBAR = 100,000,000 tinybars)
+    const feeInHbar = charged_tx_fee / 100000000;
+    console.log(
+      `Transaction fee: ${feeInHbar} HBAR (${charged_tx_fee} tinybars)`
+    );
+    return feeInHbar;
+  } catch (error) {
+    console.error("Error getting transaction fees:", error);
+    return 0; // Return 0 fee on any error
+  }
+};

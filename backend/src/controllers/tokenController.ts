@@ -11,6 +11,7 @@ import {
   getUserTokenBalance,
   updateUserTokenBalance,
   deductHbarFees,
+  getTransactionFees,
 } from "./tokenHelpers";
 
 /**
@@ -175,30 +176,53 @@ export const mintStockTokens = async (req: Request, res: Response) => {
       "" // Use treasury key (OPERATOR_KEY) via empty string
     );
 
+    console.log(`Transfer receipt:`, transferReceipt);
+
+    // Get actual transaction fees from Mirror Node API
+    const actualFee = await getTransactionFees(transferReceipt.transactionId);
+    console.log(`Actual transaction fee: ${actualFee} HBAR`);
+
+    // Deduct HBAR fees from user's token holdings
+    const hbarHoldingIndex = user.tokenHoldings.findIndex(
+      (holding) => holding.tokenId === "HBAR"
+    );
+
+    if (hbarHoldingIndex !== -1) {
+      // Update HBAR balance
+      user.tokenHoldings[hbarHoldingIndex].balance -= actualFee;
+      console.log(
+        `Updated HBAR balance: ${user.tokenHoldings[hbarHoldingIndex].balance} HBAR`
+      );
+
+      // Remove HBAR holding if balance is zero
+      if (user.tokenHoldings[hbarHoldingIndex].balance <= 0) {
+        user.tokenHoldings.splice(hbarHoldingIndex, 1);
+        console.log("Removed HBAR holding due to zero balance");
+      }
+    } else {
+      console.log("No HBAR holding found for user");
+    }
+
     // Create transaction record
     const transaction = new Transaction({
       userId: userId,
       tokenId: token.tokenId,
       stockCode,
       amount,
-      type: TransactionType.MINT, // Still use MINT transaction type for consistency
+      type: TransactionType.MINT,
       status: TransactionStatus.COMPLETED,
-      fee: 0, // Set fee if applicable
+      fee: actualFee,
       paymentTokenId: "HBAR",
-      paymentAmount: 0, // No payment for minting, just reducing available stock
+      paymentAmount: 0,
       hederaTransactionId: transferReceipt.transactionId?.toString(),
     });
 
     await transaction.save();
 
-    // Update the user's token holdings
+    // Update the user's token holdings for the minted token
     const tokenHoldingIndex = user.tokenHoldings.findIndex(
       (holding) => holding.tokenId === token.tokenId
     );
-
-    // Deduct HBAR fees (0.1% of transaction value)
-    const estimatedFee = (amount * 0.001) / 24.51; // Convert to HBAR
-    await deductHbarFees(userId, estimatedFee);
 
     if (tokenHoldingIndex === -1) {
       user.tokenHoldings.push({
@@ -345,6 +369,11 @@ export const burnStockTokens = async (req: Request, res: Response) => {
 
         console.log("Transaction verified successfully");
 
+        // Get actual transaction fees
+        console.log("Original transaction ID:", transactionId);
+        const actualFee = await getTransactionFees(transactionId);
+        console.log(`Actual transaction fee: ${actualFee} HBAR`);
+
         // Create transaction record
         const transaction = new Transaction({
           userId: userId,
@@ -353,7 +382,7 @@ export const burnStockTokens = async (req: Request, res: Response) => {
           amount,
           type: TransactionType.BURN,
           status: TransactionStatus.COMPLETED,
-          fee: 0,
+          fee: actualFee,
           paymentTokenId: "HBAR",
           paymentAmount: 0,
           hederaTransactionId: transactionId,
@@ -362,9 +391,8 @@ export const burnStockTokens = async (req: Request, res: Response) => {
         await transaction.save();
         console.log("Transaction record created");
 
-        // Deduct HBAR fees (0.1% of transaction value)
-        const estimatedFee = (amount * 0.001) / 24.51; // Convert to HBAR
-        await deductHbarFees(userId, estimatedFee);
+        // Deduct actual HBAR fees
+        await deductHbarFees(userId, actualFee);
 
         // Update the user's token holdings
         user.tokenHoldings[tokenHoldingIndex].balance -= amount;

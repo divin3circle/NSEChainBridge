@@ -11,7 +11,7 @@ import {
   associateTokenToAccount,
 } from "../../scripts/swapTokens.js";
 import { Client, AccountId, PrivateKey } from "@hashgraph/sdk";
-import { deductHbarFees } from "./tokenHelpers";
+import { deductHbarFees, getTransactionFees } from "./tokenHelpers";
 
 const USDC_TOKEN_ID = "0.0.5791936";
 const USDC_TOKEN_ADDRESS = "0x00000000000000000000000000000000005860c0";
@@ -138,6 +138,11 @@ export const sellTokensForUsdc = async (req: Request, res: Response) => {
         Math.floor(Date.now() / 1000) + 600 // 10 minutes deadline
       );
 
+      // Get actual transaction fees
+      console.log("Original transaction ID:", swapResult.transactionId);
+      const actualFee = await getTransactionFees(swapResult.transactionId);
+      console.log(`Actual transaction fee: ${actualFee} HBAR`);
+
       // Update user's token holdings
       // Subtract the sold tokens from both balance and lockedQuantity
       const tokenHoldingIndex = user.tokenHoldings.findIndex(
@@ -159,9 +164,8 @@ export const sellTokensForUsdc = async (req: Request, res: Response) => {
         (holding) => holding.tokenId === USDC_TOKEN_ID
       );
 
-      // Deduct HBAR fees (0.1% of transaction value)
-      const estimatedFee = (usdcAmount * 0.001) / 24.51; // Convert USDC to HBAR
-      await deductHbarFees(userId, estimatedFee);
+      // Deduct actual HBAR fees
+      await deductHbarFees(userId, actualFee);
 
       if (usdcHoldingIndex >= 0) {
         user.tokenHoldings[usdcHoldingIndex].balance += usdcAmount;
@@ -175,7 +179,7 @@ export const sellTokensForUsdc = async (req: Request, res: Response) => {
 
       await user.save();
 
-      // Create transaction record
+      // Create transaction record with actual fee
       const transaction = new Transaction({
         userId,
         tokenId: stockToken.tokenId,
@@ -183,7 +187,7 @@ export const sellTokensForUsdc = async (req: Request, res: Response) => {
         type: TransactionType.SELL,
         status: TransactionStatus.COMPLETED,
         amount,
-        fee: 0,
+        fee: actualFee,
         paymentTokenId: USDC_TOKEN_ID,
         paymentAmount: usdcAmount,
         hederaTransactionId: swapResult.transactionId,
@@ -205,7 +209,7 @@ export const sellTokensForUsdc = async (req: Request, res: Response) => {
         },
         transaction: {
           hederaTransactionId: swapResult.transactionId,
-          fee: 0,
+          fee: actualFee,
           paymentAmount: usdcAmount,
           type: TransactionType.SELL,
           status: TransactionStatus.COMPLETED,
