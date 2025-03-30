@@ -30,8 +30,6 @@ const Wallet = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
 
-  const { transactions, isLoading, error } = useTransactions();
-
   useEffect(() => {
     const fetchLocalUserData = async () => {
       try {
@@ -69,6 +67,7 @@ const Wallet = () => {
     };
     fetchLocalUserData();
   }, []);
+  const { transactions, isLoading, error } = useTransactions();
 
   const { tokens } = useStocks();
 
@@ -291,7 +290,7 @@ const Wallet = () => {
             {randomToken && (
               <View
                 style={{
-                  width: "50%",
+                  width: width * 0.48,
                   height: width * 0.6,
                   backgroundColor: "#fff",
                   borderRadius: 14,
@@ -435,7 +434,7 @@ const Wallet = () => {
           ) : (
             tokens.map((token) => (
               <TouchableOpacity
-                onPress={() => router.replace(`/stock/${token.code}`)}
+                onPress={() => router.replace(`/token/${token.code}`)}
                 key={token.code}
                 style={{
                   justifyContent: "space-between",

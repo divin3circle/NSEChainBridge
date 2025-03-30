@@ -38,8 +38,16 @@ interface WalletDetails {
   createdAt: string;
 }
 
+interface CreateAccountResponse {
+  message: string;
+  hederaAccountId: string;
+  privateKey: string;
+  publicKey: string;
+  balance: number;
+}
+
 const Create = () => {
-  const { createHederaAccount, isLoading, error } = useAuth();
+  const { createHederaAccount, isLoading, error: authError } = useAuth();
   const { open } = useWalletService();
   const [accountStatus, setAccountStatus] = useState<AccountStatus>("initial");
   const [accountDetails, setAccountDetails] = useState<AccountDetails | null>(
@@ -49,13 +57,19 @@ const Create = () => {
     null
   );
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [walletError, setWalletError] = useState<string | null>(null);
   const [walletCreated, setWalletCreated] = useState(false);
 
   const handleCreateAccount = async () => {
     try {
       setAccountStatus("creating");
+      setLoading(true);
+      setError(null);
+
+      // Create the account and wait for the response
       await createHederaAccount();
+
       // Get the account details from AsyncStorage
       const [accountId, publicKey] = await Promise.all([
         AsyncStorage.getItem("hederaAccountId"),
@@ -66,14 +80,22 @@ const Create = () => {
         setAccountDetails({
           accountId,
           publicKey,
-          balance: "0.0", // Initial balance will be updated
+          balance: "10.0", // Initial HBAR balance
         });
         setAccountStatus("created");
       } else {
         throw new Error("Failed to get account details");
       }
     } catch (err) {
+      console.error("Account creation error:", err);
       setAccountStatus("error");
+      setError(
+        err && typeof err === "object" && "message" in err
+          ? String(err.message)
+          : "Failed to create account"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -325,11 +347,7 @@ const Create = () => {
               autoPlay
               loop={false}
             />
-            <Text style={styles.error}>
-              {error instanceof Error
-                ? error.message
-                : error || "An error occurred"}
-            </Text>
+            <Text style={styles.error}>{error || "An error occurred"}</Text>
             <TouchableOpacity
               style={styles.button}
               onPress={() => setAccountStatus("initial")}

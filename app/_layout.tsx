@@ -113,6 +113,13 @@ export default function RootLayout() {
               presentation: "modal",
             }}
           />
+          <Stack.Screen
+            name="token/[id]"
+            options={{
+              headerShown: false,
+              title: "Swap Token",
+            }}
+          />
         </Stack>
       </QueryClientProvider>
     </WagmiProvider>

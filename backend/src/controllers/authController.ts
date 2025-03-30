@@ -3,6 +3,14 @@ import User from "../models/User";
 import { generateToken } from "../utils/jwt";
 import accountService from "../services/accountService";
 import Token from "../models/Token";
+import {
+  AccountId,
+  Client,
+  Hbar,
+  PrivateKey,
+  TransferTransaction,
+  Status,
+} from "@hashgraph/sdk";
 
 /**
  * Register a new user
@@ -129,6 +137,62 @@ export const createHederaAccount = async (req: Request, res: Response) => {
     user.hederaAccountId = accountInfo.accountId;
     user.privateKey = accountInfo.privateKey;
 
+    // fund user 25HBAR to user's account
+    // Create a transaction to transfer 1 HBAR
+    const HEDERA_OPERATOR_ID = AccountId.fromString("0.0.5483001");
+    const HEDERA_OPERATOR_KEY = PrivateKey.fromStringECDSA(
+      "a21d310e140357b2b623fe74a9499af53d8847b1fd0f0b23376ef76d2ea0bce0"
+    );
+    const myAccountId = HEDERA_OPERATOR_ID;
+    const myPrivateKey = HEDERA_OPERATOR_KEY;
+
+    const client = Client.forTestnet();
+    client.setOperator(myAccountId, myPrivateKey);
+    const txTransfer = new TransferTransaction()
+      .addHbarTransfer(myAccountId, new Hbar(-10))
+      .addHbarTransfer(user.hederaAccountId, new Hbar(10));
+
+    const txTransferResponse = await txTransfer.execute(client);
+    const receiptTransferTx = await txTransferResponse.getReceipt(client);
+    const statusTransferTx = receiptTransferTx.status;
+    const txIdTransfer = txTransferResponse.transactionId.toString();
+
+    // Check if transaction was successful
+    if (statusTransferTx !== Status.Success) {
+      throw new Error(`HBAR transfer failed with status: ${statusTransferTx}`);
+    }
+
+    console.log(
+      "-------------------------------- Transfer HBAR ------------------------------ "
+    );
+    console.log("Receipt status           :", statusTransferTx.toString());
+    console.log("Transaction ID           :", txIdTransfer);
+    console.log(
+      "Hashscan URL             :",
+      `https://hashscan.io/testnet/tx/${txIdTransfer}`
+    );
+
+    // Create or find HBAR token
+    let hbarToken = await Token.findOne({ tokenId: "HBAR" });
+    if (!hbarToken) {
+      hbarToken = await Token.create({
+        tokenId: "HBAR",
+        symbol: "HBAR",
+        name: "Hedera Testnet",
+        decimals: 18,
+        totalSupply: "1000000000000000000000000000", // 1 trillion HBAR
+        stockCode: "HBAR",
+        treasuryAccountId: "0.0.5483001", // Add treasury account ID
+      });
+    }
+
+    // Add HBAR to user's token holdings
+    user.tokenHoldings.push({
+      tokenId: "HBAR",
+      balance: 10,
+      lockedQuantity: 0,
+    });
+
     if ("publicKey" in accountInfo) {
       user.hederaPublicKey = accountInfo.publicKey as string;
     }
@@ -140,6 +204,7 @@ export const createHederaAccount = async (req: Request, res: Response) => {
       hederaAccountId: accountInfo.accountId,
       privateKey: accountInfo.privateKey,
       publicKey: accountInfo.publicKey || user.hederaPublicKey,
+      balance: 10, // Add initial HBAR balance to response
     });
   } catch (error) {
     console.error("Hedera account creation error:", error);
@@ -188,8 +253,8 @@ export const getCurrentUser = async (req: Request, res: Response) => {
         const token = tokens.find((t) => t.tokenId === holding.tokenId);
         return {
           tokenId: holding.tokenId,
-          symbol: token?.symbol || "UNKNOWN",
-          name: token?.name || "Unknown Token",
+          symbol: token?.symbol || "HBAR",
+          name: token?.name || "Hedera Testnet",
           balance: holding.balance,
           stockCode: token?.stockCode || null,
         };

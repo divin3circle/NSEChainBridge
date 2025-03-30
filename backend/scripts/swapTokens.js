@@ -1,12 +1,12 @@
-const { 
-    ContractFunctionParameters, 
-    ContractExecuteTransaction,
-    AccountAllowanceApproveTransaction,
-    TokenAssociateTransaction,
-    Client,
-    AccountId,
-    PrivateKey
-} = require('@hashgraph/sdk');
+const {
+  ContractFunctionParameters,
+  ContractExecuteTransaction,
+  AccountAllowanceApproveTransaction,
+  TokenAssociateTransaction,
+  Client,
+  AccountId,
+  PrivateKey,
+} = require("@hashgraph/sdk");
 const dotenv = require("dotenv");
 
 // Use the provided operator credentials
@@ -22,7 +22,7 @@ const USDC_TOKEN_ADDRESS = "0x00000000000000000000000000000000005860c0";
 const KCB_TOKEN_ADDRESS = "0x000000000000000000000000000000000058441c";
 
 // Load environment variables for other config values
-dotenv.config({ path: '../.env' });
+dotenv.config({ path: "../.env" });
 
 /**
  * Swaps an exact amount of input tokens for as many output tokens as possible
@@ -47,13 +47,15 @@ async function swapExactTokensForTokens(
   gasLim = 1_000_000
 ) {
   try {
-    console.log(`Swapping ${amountIn} tokens along path [${tokenPath.join(' -> ')}]...`);
-    
+    console.log(
+      `Swapping ${amountIn} tokens along path [${tokenPath.join(" -> ")}]...`
+    );
+
     // Client pre-checks:
     // - Output token is associated
     // - Router contract has spender allowance for the input token
-    console.log('Preparing transaction parameters...');
-    
+    console.log("Preparing transaction parameters...");
+
     const params = new ContractFunctionParameters();
     params.addUint256(amountIn); // uint amountIn
     params.addUint256(amountOutMin); // uint amountOutMin
@@ -61,41 +63,41 @@ async function swapExactTokensForTokens(
     params.addAddress(toAddress); // address to
     params.addUint256(deadline); // uint deadline
 
-    client = Client.forTestnet();
-    client.setOperator(HEDERA_OPERATOR_ID, HEDERA_OPERATOR_KEY);
-    
-    console.log('Executing swapExactTokensForTokens transaction...');
+    // client = Client.forTestnet();
+    // client.setOperator(HEDERA_OPERATOR_ID, HEDERA_OPERATOR_KEY);
+
+    console.log("Executing swapExactTokensForTokens transaction...");
     const response = await new ContractExecuteTransaction()
       .setContractId(routerContractId)
       .setGas(gasLim)
-      .setFunction('swapExactTokensForTokens', params)
+      .setFunction("swapExactTokensForTokens", params)
       .execute(client);
-      
-    console.log('Transaction submitted. Fetching record...');
+
+    console.log("Transaction submitted. Fetching record...");
     const record = await response.getRecord(client);
     const result = record.contractFunctionResult;
-    
+
     if (!result) {
-      throw new Error('Contract execution failed: No result returned');
+      throw new Error("Contract execution failed: No result returned");
     }
-    
-    const values = result.getResult(['uint[]']);
+
+    const values = result.getResult(["uint[]"]);
     const amounts = values[0]; // uint[] amounts
     const inputAmount = amounts[0];
     const outputAmount = amounts[amounts.length - 1];
-    
-    console.log('Swap executed successfully:');
+
+    console.log("Swap executed successfully:");
     console.log(`- Input Amount: ${inputAmount.toString()}`);
     console.log(`- Output Amount: ${outputAmount.toString()}`);
-    
+
     return {
-      amounts: amounts.map(amount => amount.toString()),
+      amounts: amounts.map((amount) => amount.toString()),
       inputAmount: inputAmount.toString(),
       outputAmount: outputAmount.toString(),
-      transactionId: record.transactionId.toString()
+      transactionId: record.transactionId.toString(),
     };
   } catch (error) {
-    console.error('Error swapping tokens:', error);
+    console.error("Error swapping tokens:", error);
     throw error;
   }
 }
@@ -108,6 +110,25 @@ async function swapExactTokensForTokens(
  * @param {string} tokenId - Token ID to associate
  * @returns {Object} Receipt of the association transaction
  */
+async function associateTokenToAccount(client, accountId, privateKey, tokenId) {
+  try {
+    console.log(`Associating token ${tokenId} with account ${accountId}...`);
+
+    const transaction = new TokenAssociateTransaction()
+      .setAccountId(accountId)
+      .setTokenIds([tokenId]);
+
+    const signedTx = await transaction.freezeWith(client).sign(privateKey);
+    const response = await signedTx.execute(client);
+    const receipt = await response.getReceipt(client);
+
+    console.log(`Token association status: ${receipt.status}`);
+    return receipt;
+  } catch (error) {
+    console.error("Error associating token:", error);
+    throw error;
+  }
+}
 // async function associateTokenToAccount(client, accountId, privateKey, tokenId) {
 //   try {
 //     console.log(`Associating token ${tokenId} with account ${accountId}...`);
@@ -138,21 +159,35 @@ async function swapExactTokensForTokens(
  * @param {number} amount - Amount to approve
  * @returns {Object} Receipt of the approval transaction
  */
-async function approveAllowance(client, accountId, privateKey, tokenId, routerAddress, amount) {
+async function approveAllowance(
+  client,
+  accountId,
+  privateKey,
+  tokenId,
+  routerAddress,
+  amount
+) {
   try {
-    console.log(`Approving ${amount} of token ${tokenId} for router ${routerAddress}...`);
-    
-    const transaction = new AccountAllowanceApproveTransaction()
-      .approveTokenAllowance(tokenId, accountId, routerAddress, amount);
-      
+    console.log(
+      `Approving ${amount} of token ${tokenId} for router ${routerAddress}...`
+    );
+
+    const transaction =
+      new AccountAllowanceApproveTransaction().approveTokenAllowance(
+        tokenId,
+        accountId,
+        routerAddress,
+        amount
+      );
+
     const signedTx = await transaction.freezeWith(client).sign(privateKey);
     const response = await signedTx.execute(client);
     const receipt = await response.getReceipt(client);
-    
+
     console.log(`Allowance approval status: ${receipt.status}`);
     return receipt;
   } catch (error) {
-    console.error('Error approving allowance:', error);
+    console.error("Error approving allowance:", error);
     throw error;
   }
 }
@@ -161,15 +196,15 @@ async function approveAllowance(client, accountId, privateKey, tokenId, routerAd
  * Example usage
  */
 async function main() {
-  console.log('Starting token swap process...');
+  console.log("Starting token swap process...");
   try {
     // Use the provided operator credentials
     const myAccountId = HEDERA_OPERATOR_ID;
     const myPrivateKey = HEDERA_OPERATOR_KEY;
-    
+
     const client = Client.forTestnet();
     client.setOperator(myAccountId, myPrivateKey);
-    
+
     // Get other values from environment or use defaults
     const routerContractId = ROUTER_CONTRACT_ID;
     const fromTokenId = KCB_TOKEN_ID;
@@ -177,25 +212,41 @@ async function main() {
     const fromTokenAddress = KCB_TOKEN_ADDRESS;
     const toTokenAddress = USDC_TOKEN_ADDRESS;
     const myAccountAddress = HEDERA_OPERATOR_ADDRESS;
-    
+
     // Example values - these would be set based on actual requirements
-    const amountIn = 25000; // 1 USDC (assuming 6 decimals)
+    const amountIn = 50; // 1 USDC (assuming 6 decimals)
+
     const amountOutMin = 0; // Minimum amount expected back
     const tokenPath = [fromTokenAddress, toTokenAddress]; // Direct swap path
     const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes from now
-    
+
     // Ensure destination token is associated
     try {
-      // await associateTokenToAccount(client, myAccountId, myPrivateKey, toTokenId);
-      console.log('Token association completed.');
+      await associateTokenToAccount(
+        client,
+        myAccountId,
+        myPrivateKey,
+        toTokenId
+      );
+      console.log("Token association completed.");
     } catch (error) {
       // If association fails because token is already associated, continue
-      console.log('Token likely already associated or error occurred:', error.message);
+      console.log(
+        "Token likely already associated or error occurred:",
+        error.message
+      );
     }
-    
+
     // Approve allowance for the token being sold
-    await approveAllowance(client, myAccountId, myPrivateKey, fromTokenId, routerContractId, amountIn);
-    
+    await approveAllowance(
+      client,
+      myAccountId,
+      myPrivateKey,
+      fromTokenId,
+      routerContractId,
+      amountIn
+    );
+
     // Execute swap
     const result = await swapExactTokensForTokens(
       client,
@@ -206,23 +257,24 @@ async function main() {
       myAccountAddress,
       deadline
     );
-    
-    console.log('Swap completed successfully:');
-    console.log('- Swap amounts:', result.amounts);
-    console.log('- Input amount:', result.inputAmount);
-    console.log('- Output amount:', result.outputAmount);
-    console.log('- Transaction ID:', result.transactionId);
+
+    console.log("Swap completed successfully:");
+    console.log("- Swap amounts:", result.amounts);
+    console.log("- Input amount:", result.inputAmount);
+    console.log("- Output amount:", result.outputAmount);
+    console.log("- Transaction ID:", result.transactionId);
   } catch (error) {
-    console.error('Error in main execution:', error);
+    console.error("Error in main execution:", error);
   }
 }
 
 // Run the script
-main();
+// main();
 
 // Export the functions for use in other scripts
 module.exports = {
   swapExactTokensForTokens,
-  // associateTokenToAccount,
-  approveAllowance
+  associateTokenToAccount,
+  approveAllowance,
 };
+
