@@ -17,10 +17,10 @@ const HEDERA_OPERATOR_KEY = PrivateKey.fromStringECDSA(
 );
 const HEDERA_OPERATOR_ADDRESS = "0x4e6e8bc89523de1e65576136ce6863081ba30e52";
 const USDC_TOKEN_ID = "0.0.5791936";
-const EQUITY_TOKEN_ID = "0.0.5784606";
+const EQUITY_TOKEN_ID = "0.0.5784605";
 const ROUTER_CONTRACT_ID = "0.0.19264";
 const USDC_TOKEN_ADDRESS = "0x00000000000000000000000000000000005860c0";
-const EQUITY_TOKEN_ADDRESS = "0x000000000000000000000000000000000058441e";
+const EQUITY_TOKEN_ADDRESS = "0x000000000000000000000000000000000058441d";
 
 // Load environment variables
 dotenv.config({ path: '../.env' });
@@ -171,10 +171,10 @@ async function main() {
         const myAccountAddress = HEDERA_OPERATOR_ADDRESS;
         
         // Example values - these would be set based on actual requirements
-        const amountADesired = 100000;
+        const amountADesired = 200000;
         const amountBDesired = 200000;
-        const amountAMin = 95000;
-        const amountBMin = 190000;
+        const amountAMin = 195000;
+        const amountBMin = 195000;
         const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes from now
         const poolCreationFeeHbar = 30; // HBAR fee for creating a pool
         
