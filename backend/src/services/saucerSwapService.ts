@@ -42,6 +42,17 @@ class SaucerSwapService {
     deadline: number
   ): Promise<any> {
     try {
+      console.log("Starting swap with parameters:");
+      console.log(`Amount In: ${amountIn}`);
+      console.log(`Min Amount Out: ${amountOutMin}`);
+      console.log(`Token Path: ${tokenPath.join(" -> ")}`);
+      console.log(`To Address: ${toAddress}`);
+      console.log(`Deadline: ${deadline}`);
+
+      // Add a small delay to ensure token approval is processed
+      console.log("Waiting 2 seconds for token approval to be processed...");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // Convert Hedera token IDs to EVM addresses
       const evmTokenPath = tokenPath.map((tokenId) => {
         // Convert Hedera token ID to EVM address format
@@ -59,27 +70,52 @@ class SaucerSwapService {
         `Converting account ${toAddress} to EVM address: ${evmToAddress}`
       );
 
+      // Convert router contract ID to EVM address
+      const routerEvmAddress = this.routerContractId.toSolidityAddress();
+      console.log(`Router EVM address: ${routerEvmAddress}`);
+
+      // Adjust amounts for decimals (assuming USDC with 6 decimals)
+      const adjustedAmountIn = amountIn * Math.pow(10, 6);
+      const adjustedAmountOutMin = amountOutMin * Math.pow(10, 6);
+
+      console.log(`Adjusted Amount In: ${adjustedAmountIn}`);
+      console.log(`Adjusted Min Amount Out: ${adjustedAmountOutMin}`);
+
       // Create function parameters
       const params = new ContractFunctionParameters()
-        .addUint256(amountIn)
-        .addUint256(amountOutMin)
+        .addUint256(adjustedAmountIn)
+        .addUint256(adjustedAmountOutMin)
         .addAddressArray(evmTokenPath)
         .addAddress(evmToAddress)
         .addUint256(deadline);
 
+      console.log("Creating swap transaction with parameters:");
+      console.log(`EVM Token Path: ${evmTokenPath.join(" -> ")}`);
+      console.log(`EVM To Address: ${evmToAddress}`);
+
       // Create and execute the swap transaction
       const record = await new ContractExecuteTransaction()
         .setContractId(this.routerContractId)
-        .setGas(500000) // Adjust gas limit as needed
+        .setGas(1000000) // Increased gas limit
         .setFunction("swapExactTokensForTokens", params)
         .execute(this.client);
+
+      console.log("Swap transaction executed, getting record...");
 
       // Get the transaction record
       const txRecord = await record.getRecord(this.client);
       const result = txRecord.contractFunctionResult!;
+
+      console.log("Contract function result:", result);
+
       const values = result.getResult(["uint[]"]);
       const amounts = values[0]; // uint[] amounts
-      const finalOutputAmount = amounts[amounts.length - 1];
+      const finalOutputAmount =
+        Number(amounts[amounts.length - 1]) / Math.pow(10, 6); // Convert back from 6 decimals
+
+      console.log("Swap successful!");
+      console.log(`Input Amount: ${amountIn}`);
+      console.log(`Output Amount: ${finalOutputAmount}`);
 
       return {
         status: "SUCCESS",
@@ -88,6 +124,12 @@ class SaucerSwapService {
       };
     } catch (error: any) {
       console.error("Error executing SaucerSwap:", error);
+      if (error.status && error.status._code) {
+        console.error("Error code:", error.status._code);
+      }
+      if (error.transactionReceipt) {
+        console.error("Transaction receipt:", error.transactionReceipt);
+      }
       throw new Error(`Failed to execute SaucerSwap: ${error.message}`);
     }
   }
@@ -143,12 +185,20 @@ class SaucerSwapService {
 
       console.log("Key type:", userPrivateKey.constructor.name);
 
+      // Adjust amount for token decimals (assuming USDC with 6 decimals)
+      const adjustedAmount = amount * Math.pow(10, 6);
+      console.log(`Approving amount: ${amount} (adjusted: ${adjustedAmount})`);
+
+      // Convert router contract ID to EVM address
+      const routerEvmAddress = this.routerContractId.toSolidityAddress();
+      console.log(`Router EVM address for approval: ${routerEvmAddress}`);
+
       const transaction = new AccountAllowanceApproveTransaction()
         .approveTokenAllowance(
           TokenId.fromString(tokenId),
           AccountId.fromString(accountId),
           this.routerAccountId,
-          amount
+          adjustedAmount
         )
         .freezeWith(this.client);
 
