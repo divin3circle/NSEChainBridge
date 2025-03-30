@@ -6,7 +6,7 @@ const {
 } = require("@hashgraph/sdk");
 
 const USDC_TOKEN_ID = "0.0.5791936";
-const STOCK_TOKEN_ID = "0.0.5784607";
+const STOCK_TOKEN_ID = "0.0.5784605";
 
 async function main() {
   let client;
@@ -23,7 +23,7 @@ async function main() {
 
     const txTokenMint = await new TokenMintTransaction()
       .setTokenId(STOCK_TOKEN_ID)
-      .setAmount(10000000000000)
+      .setAmount(100_000_000)
       .freezeWith(client);
 
     const signTxTokenMint = await txTokenMint.sign(MY_PRIVATE_KEY);

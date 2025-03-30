@@ -108,25 +108,25 @@ async function swapExactTokensForTokens(
  * @param {string} tokenId - Token ID to associate
  * @returns {Object} Receipt of the association transaction
  */
-async function associateTokenToAccount(client, accountId, privateKey, tokenId) {
-  try {
-    console.log(`Associating token ${tokenId} with account ${accountId}...`);
+// async function associateTokenToAccount(client, accountId, privateKey, tokenId) {
+//   try {
+//     console.log(`Associating token ${tokenId} with account ${accountId}...`);
     
-    const transaction = new TokenAssociateTransaction()
-      .setAccountId(accountId)
-      .setTokenIds([tokenId]);
+//     const transaction = new TokenAssociateTransaction()
+//       .setAccountId(accountId)
+//       .setTokenIds([tokenId]);
       
-    const signedTx = await transaction.freezeWith(client).sign(privateKey);
-    const response = await signedTx.execute(client);
-    const receipt = await response.getReceipt(client);
+//     const signedTx = await transaction.freezeWith(client).sign(privateKey);
+//     const response = await signedTx.execute(client);
+//     const receipt = await response.getReceipt(client);
     
-    console.log(`Token association status: ${receipt.status}`);
-    return receipt;
-  } catch (error) {
-    console.error('Error associating token:', error);
-    throw error;
-  }
-}
+//     console.log(`Token association status: ${receipt.status}`);
+//     return receipt;
+//   } catch (error) {
+//     console.error('Error associating token:', error);
+//     throw error;
+//   }
+// }
 
 /**
  * Helper function to approve allowance for router contract
@@ -179,14 +179,14 @@ async function main() {
     const myAccountAddress = HEDERA_OPERATOR_ADDRESS;
     
     // Example values - these would be set based on actual requirements
-    const amountIn = 50000; // 1 USDC (assuming 6 decimals)
+    const amountIn = 25000; // 1 USDC (assuming 6 decimals)
     const amountOutMin = 0; // Minimum amount expected back
     const tokenPath = [fromTokenAddress, toTokenAddress]; // Direct swap path
     const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes from now
     
     // Ensure destination token is associated
     try {
-      await associateTokenToAccount(client, myAccountId, myPrivateKey, toTokenId);
+      // await associateTokenToAccount(client, myAccountId, myPrivateKey, toTokenId);
       console.log('Token association completed.');
     } catch (error) {
       // If association fails because token is already associated, continue
@@ -223,6 +223,6 @@ main();
 // Export the functions for use in other scripts
 module.exports = {
   swapExactTokensForTokens,
-  associateTokenToAccount,
+  // associateTokenToAccount,
   approveAllowance
 };
