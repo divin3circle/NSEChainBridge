@@ -10,7 +10,7 @@ Backend service for NSEChainBridge - a platform for tokenizing stocks on the Nai
 - Token burning to reclaim stock positions
 - Token transfer functionality
 - Transaction history
-- Stock token buying and selling with HBAR
+- Stock token buying and selling with USDC
 
 ## Technologies
 
@@ -45,11 +45,11 @@ npm install
 
 ```
 # Server Configuration
-PORT=3001
+PORT=5004
 NODE_ENV=development
 
 # MongoDB Connection
-MONGODB_URI=mongodb://localhost:27017/nsechainbridge
+MONGODB_URI=
 
 # JWT Authentication
 JWT_SECRET=your_jwt_secret_key_here
@@ -64,7 +64,7 @@ HEDERA_OPERATOR_KEY=your_operator_private_key_here
 4. Start the development server:
 
 ```bash
-PORT=5001 NODE_ENV=development npm run dev
+PORT=5004 NODE_ENV=development npm run dev
 ```
 
 ## API Endpoints
@@ -90,7 +90,7 @@ PORT=5001 NODE_ENV=development npm run dev
 - `POST /api/tokens/create` - Create a new token (admin only)
 - `POST /api/tokens/:stockCode/mint` - Mint tokens from stock holdings
 - `POST /api/tokens/:stockCode/burn` - Burn tokens to reclaim stock holdings
-- `POST /api/tokens/:stockCode/sell` - Sell tokens for HBAR
+- `POST /api/tokens/:stockCode/sell` - Sell tokens for USDC
 
 ### Transactions
 

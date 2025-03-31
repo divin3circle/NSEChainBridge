@@ -93,7 +93,7 @@ const Wallet = () => {
             style={{
               width: "50%",
               height: width * 0.6,
-              backgroundColor: "#f6f7f9",
+              backgroundColor: "#fff",
               borderRadius: 14,
               flexDirection: "column",
               justifyContent: "center",

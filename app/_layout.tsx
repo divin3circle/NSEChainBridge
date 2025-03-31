@@ -70,6 +70,7 @@ export default function RootLayout() {
             name="(tabs)"
             options={{
               headerShown: false,
+              title: "Home",
             }}
           />
           <Stack.Screen
@@ -123,7 +124,7 @@ export default function RootLayout() {
           <Stack.Screen
             name="agent"
             options={{
-              headerShown: true,
+              headerShown: false,
               title: "Hedera Agent",
             }}
           />
