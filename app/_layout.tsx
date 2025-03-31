@@ -124,7 +124,7 @@ export default function RootLayout() {
           <Stack.Screen
             name="agent"
             options={{
-              headerShown: true,
+              headerShown: false,
               title: "Hedera Agent",
             }}
           />
