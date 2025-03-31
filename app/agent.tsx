@@ -4,9 +4,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const agent = () => {
   return (
-    <SafeAreaView>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Text>agent</Text>
-    </SafeAreaView>
+    </View>
   );
 };
 
