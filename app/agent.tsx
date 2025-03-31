@@ -466,7 +466,7 @@ const Agent = () => {
                   Select a stock to view sentiment
                 </Text>
               )}
-            </View>
+    </View>
           </>
         )}
       </ScrollView>
