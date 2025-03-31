@@ -57,7 +57,7 @@ export default function Stats() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-lg"
+              className="flex flex-col items-center justify-center p-8 bg-[#f6f7f9] rounded-lg shadow-lg"
             >
               <div className="p-3 bg-blue-50 rounded-full mb-4">
                 {stat.icon}
