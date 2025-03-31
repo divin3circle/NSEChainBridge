@@ -120,6 +120,13 @@ export default function RootLayout() {
               title: "Swap Token",
             }}
           />
+          <Stack.Screen
+            name="agent"
+            options={{
+              headerShown: true,
+              title: "Hedera Agent",
+            }}
+          />
         </Stack>
       </QueryClientProvider>
     </WagmiProvider>

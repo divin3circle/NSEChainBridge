@@ -81,45 +81,69 @@ const Home = () => {
           </View>
           <View
             style={{
-              position: "relative",
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              borderWidth: 1,
-              borderColor: Colors.light.muted,
-              flexDirection: "column",
+              flexDirection: "row",
               alignItems: "center",
-              justifyContent: "center",
+              gap: 10,
             }}
           >
-            <Ionicons
-              name="notifications"
-              size={34}
-              color={Colors.light.muted}
-            />
-            <View
+            <TouchableOpacity
+              onPress={() => router.navigate("/agent")}
               style={{
-                backgroundColor: Colors.light.primary,
-                width: 14,
-                height: 14,
-                position: "absolute",
-                top: 0,
-                left: 0,
-                borderRadius: 7,
+                width: 44,
+                height: 44,
                 flexDirection: "column",
-                justifyContent: "center",
                 alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <Text
+              <Ionicons
+                name="chatbox-ellipses"
+                size={34}
+                color={Colors.light.muted}
+              />
+            </TouchableOpacity>
+            <View
+              style={{
+                position: "relative",
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                borderWidth: 1,
+                borderColor: Colors.light.muted,
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons
+                name="notifications"
+                size={34}
+                color={Colors.light.muted}
+              />
+              <View
                 style={{
-                  fontFamily: fonts.bold,
-                  fontSize: 10,
-                  color: "#f6f7f9",
+                  backgroundColor: Colors.light.primary,
+                  width: 14,
+                  height: 14,
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  borderRadius: 7,
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
               >
-                4
-              </Text>
+                <Text
+                  style={{
+                    fontFamily: fonts.bold,
+                    fontSize: 10,
+                    color: "#f6f7f9",
+                  }}
+                >
+                  4
+                </Text>
+              </View>
             </View>
           </View>
         </View>
