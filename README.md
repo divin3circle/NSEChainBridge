@@ -15,7 +15,7 @@ NSEChainBridge is a revolutionary platform that bridges the gap between traditio
   - Stock token minting and burning
   - Token balance tracking
   - Transaction history
-  - Actual transaction fee handling using Hedera Mirror Node
+  - \*_Actual transaction fee handling using Hedera Mirror Node_
 
 - **Stock Trading**
 
@@ -70,7 +70,7 @@ To fast track development of the app we decided to make some initial assumptions
 
 - Hedera Network (Testnet)
 - Token Service
-- Saucerswap
+- SaucerSwap
 - Mirror Node API
 - Consensus Service (In Progress)
 
@@ -110,6 +110,7 @@ EABL/USDC -> 0.0.5797337
 ```bash
 git clone https://github.com/divin3circle/NSEChainBridge.git
 cd NSEChainBridge
+npm install
 ```
 
 2. Install dependencies:
@@ -142,7 +143,6 @@ API_BASE_URL=your_backend_url
 ```bash
 # Start backend server
 cd backend
-npm install
 node scrips/populateHoldings #simulates data from user's broker
 npm run build && NODE_ENV=testnet PORT=5004 node dist/index.js
 
