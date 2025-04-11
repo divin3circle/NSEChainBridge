@@ -1,0 +1,5 @@
+ignoredBuiltDependencies:
+  - bufferutil
+  - keccak
+  - protobufjs
+  - utf-8-validate
