@@ -16,9 +16,9 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { myStocks, myTokens, stockStats } from "@/constants/Data";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors, fonts } from "@/constants/Colors";
+import { Colors, fonts } from "../../constants/colors";
 import { Image } from "expo-image";
-import { blurhash } from "@/constants/Colors";
+import { blurhash } from "../../constants/colors";
 import { useTokens } from "../hooks/useTokens";
 import { useStocks } from "../hooks/useStocks";
 import { Linking } from "react-native";
@@ -52,7 +52,7 @@ const BurnToken = () => {
   const maxBurnableAmount = userToken ? userToken.stockBlanace : 0;
   const stockValue = stock ? Number(amount || 0) * stock.dayPrice : 0;
 
-  const estimatedFee = stockValue * 0.001; // 0.1% fee
+  const estimatedFee = stockValue * 0.001;
   const totalCost = stockValue + estimatedFee;
 
   const canBurn = useMemo(() => {
@@ -68,7 +68,6 @@ const BurnToken = () => {
 
   const handleBurn = async () => {
     try {
-      // Reset states at the start
       setError(null);
       setTransactionData(null);
       setShowSuccessModal(true);
@@ -102,7 +101,6 @@ const BurnToken = () => {
 
   const spinValue = useRef(new Animated.Value(0)).current;
 
-  // Set up the spinning animation
   useEffect(() => {
     if (isBurning) {
       Animated.loop(
@@ -263,7 +261,6 @@ const BurnToken = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             {error ? (
-              // Error State
               <View style={styles.modalHeader}>
                 <View style={styles.errorIcon}>
                   <Ionicons name="alert-circle" size={48} color={"#ff4444"} />
@@ -285,7 +282,6 @@ const BurnToken = () => {
                 </TouchableOpacity>
               </View>
             ) : isBurning ? (
-              // Loading State
               <View style={styles.modalHeader}>
                 <View style={styles.loadingIcon}>
                   <Animated.View style={{ transform: [{ rotate: spin }] }}>
@@ -302,7 +298,6 @@ const BurnToken = () => {
                 </Text>
               </View>
             ) : transactionData ? (
-              // Success State
               <>
                 <View style={styles.modalHeader}>
                   <View style={styles.successIcon}>
