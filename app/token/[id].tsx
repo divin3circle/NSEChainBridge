@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import React, { useState, useCallback } from "react";
 import { router, useLocalSearchParams, useRouter } from "expo-router";
-import { Colors, fonts } from "@/constants/Colors";
+import { blurhash, fonts, Colors } from "../../constants/colors";
 import { useStocks } from "../hooks/useStocks";
 import { Image } from "expo-image";
 import { myTokens, myStocks } from "@/constants/Data";

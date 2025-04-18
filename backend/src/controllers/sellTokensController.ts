@@ -148,11 +148,16 @@ export const sellTokensForUsdc = async (req: Request, res: Response) => {
       const tokenHoldingIndex = user.tokenHoldings.findIndex(
         (holding) => holding.tokenId === stockToken.tokenId
       );
-      user.tokenHoldings[tokenHoldingIndex].balance -= amount;
-      user.tokenHoldings[tokenHoldingIndex].lockedQuantity = Math.max(
-        0,
-        user.tokenHoldings[tokenHoldingIndex].lockedQuantity - amount
+      const stockHoldingIndex = user.stockHoldings.findIndex(
+        (holding) => holding.stockCode === stockCode
       );
+
+      if (stockHoldingIndex === -1) {
+        throw new Error(`Stock holding not found for ${stockCode}`);
+      }
+      user.tokenHoldings[tokenHoldingIndex].balance -= amount;
+      user.stockHoldings[stockHoldingIndex].lockedQuantity -= amount;
+      user.stockHoldings[stockHoldingIndex].quantity -= amount;
 
       if (user.tokenHoldings[tokenHoldingIndex].balance <= 0) {
         user.tokenHoldings.splice(tokenHoldingIndex, 1);

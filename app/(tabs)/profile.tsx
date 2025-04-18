@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { Image } from "expo-image";
-import { blurhash, Colors, fonts } from "@/constants/Colors";
+import { blurhash, Colors, fonts } from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import TextLine from "@/components/TextLine";
 import AsyncStorage from "@react-native-async-storage/async-storage";

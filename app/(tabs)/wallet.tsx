@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { blurhash, Colors, fonts } from "@/constants/Colors";
+import { blurhash, fonts, Colors } from "../../constants/colors";
 import { Image } from "expo-image";
 import { myTokens } from "@/constants/Data";
 import TextLine from "@/components/TextLine";

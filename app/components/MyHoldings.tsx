@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useStocks } from "../hooks/useStocks";
-import { Colors, fonts } from "@/constants/Colors";
+import { blurhash, fonts, Colors } from "../../constants/colors";
 import { useRouter } from "expo-router";
 
 type HoldingsTab = "stocks" | "tokens";

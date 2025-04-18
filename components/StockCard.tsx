@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import React from "react";
 import { Movers } from "@/constants/Data";
 import { Image } from "expo-image";
-import { blurhash, Colors, fonts } from "@/constants/Colors";
+import { blurhash, fonts, Colors } from "../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 

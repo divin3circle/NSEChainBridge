@@ -11,11 +11,11 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors, fonts } from "@/constants/Colors";
+import { Colors, fonts } from "../constants/colors";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_BASE_URL } from "@/constants/Data";
+import { API_BASE_URL } from "../constants/Data";
 import { useRouter } from "expo-router";
 interface PortfolioInsights {
   portfolioValue: number;
@@ -466,7 +466,7 @@ const Agent = () => {
                   Select a stock to view sentiment
                 </Text>
               )}
-    </View>
+            </View>
           </>
         )}
       </ScrollView>

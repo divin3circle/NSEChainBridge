@@ -16,9 +16,8 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { myStocks, myTokens, stockStats } from "@/constants/Data";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors, fonts } from "@/constants/Colors";
+import { blurhash, fonts, Colors } from "../../constants/colors";
 import { Image } from "expo-image";
-import { blurhash } from "@/constants/Colors";
 import { useTokens } from "../hooks/useTokens";
 import { useStocks } from "../hooks/useStocks";
 

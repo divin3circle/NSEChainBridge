@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
-import { blurhash, Colors, fonts } from "@/constants/Colors";
+import { blurhash, Colors, fonts } from "../constants/colors";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "./hooks/useAuth";

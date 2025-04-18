@@ -7,9 +7,9 @@ import {
   View,
 } from "react-native";
 import React, { useState } from "react";
-import { categories, Category, topMovers } from "@/constants/Data";
-import StockCard from "@/components/StockCard";
-import { Colors, fonts } from "@/constants/Colors";
+import { categories, Category, topMovers } from "../../constants/Data";
+import StockCard from "../../components/StockCard";
+import { Colors, fonts } from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 
 function MarketsHeader() {

@@ -8,7 +8,8 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { blurhash, Colors, fonts } from "@/constants/Colors";
+import { Colors } from "../constants/Colors";
+import { blurhash, fonts } from "../../constants/colors";
 import { GROWTH } from ".";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -25,11 +26,12 @@ const Portfolio = () => {
     return acc + Number(stock.dayPrice * stock.stockBlanace);
   }, 0);
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-      <SafeAreaView
+    <SafeAreaView style={styles.container}>
+      <ScrollView
         style={{
           paddingHorizontal: 14,
         }}
+        showsVerticalScrollIndicator={false}
       >
         <Text
           style={{
@@ -224,8 +226,8 @@ const Portfolio = () => {
         />
 
         <MyHoldings />
-      </SafeAreaView>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

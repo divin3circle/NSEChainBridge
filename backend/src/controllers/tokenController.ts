@@ -414,10 +414,7 @@ export const burnStockTokens = async (req: Request, res: Response) => {
         }
 
         // Update locked quantity (unlock the burned tokens)
-        user.stockHoldings[stockHoldingIndex].lockedQuantity = Math.max(
-          0,
-          user.stockHoldings[stockHoldingIndex].lockedQuantity - amount
-        );
+        user.stockHoldings[stockHoldingIndex].lockedQuantity -= amount;
         await user.save();
         console.log(
           `Updated locked quantity: ${user.stockHoldings[stockHoldingIndex].lockedQuantity}`

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
-import { Colors, fonts } from "../constants/Colors";
+import { Colors, fonts } from "../constants/colors";
 
 const TextLine = ({ title, text }: { title: string; text: string }) => {
   return (

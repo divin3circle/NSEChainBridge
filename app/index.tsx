@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import { Image } from "expo-image";
-import { blurhash, Colors, fonts } from "../constants/Colors";
+import { blurhash, Colors, fonts } from "../constants/colors";
 import LottieView from "lottie-react-native";
 
 const { width } = Dimensions.get("window");

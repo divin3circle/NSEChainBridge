@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from "react-native";
 import React, { useState } from "react";
-import { Colors, fonts } from "@/constants/Colors";
+import { Colors, fonts } from "../constants/colors";
 import { useAuth } from "./hooks/useAuth";
 import LottieView from "lottie-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -39,10 +39,9 @@ interface WalletDetails {
 }
 
 interface CreateAccountResponse {
-  message: string;
   hederaAccountId: string;
-  privateKey: string;
   publicKey: string;
+  privateKey: string;
   balance: number;
 }
 
@@ -67,25 +66,23 @@ const Create = () => {
       setLoading(true);
       setError(null);
 
-      // Create the account and wait for the response
-      await createHederaAccount();
-
-      // Get the account details from AsyncStorage
-      const [accountId, publicKey] = await Promise.all([
-        AsyncStorage.getItem("hederaAccountId"),
-        AsyncStorage.getItem("hederaPublicKey"),
-      ]);
-
-      if (accountId && publicKey) {
-        setAccountDetails({
-          accountId,
-          publicKey,
-          balance: "10.0", // Initial HBAR balance
+      // Create the account and wait for the mutation to complete
+      await new Promise((resolve, reject) => {
+        createHederaAccount(undefined, {
+          onSuccess: (data) => {
+            setAccountDetails({
+              accountId: data.hederaAccountId,
+              publicKey: data.publicKey,
+              balance: "10.0",
+            });
+            setAccountStatus("created");
+            resolve(data);
+          },
+          onError: (err) => {
+            reject(err);
+          },
         });
-        setAccountStatus("created");
-      } else {
-        throw new Error("Failed to get account details");
-      }
+      });
     } catch (err) {
       console.error("Account creation error:", err);
       setAccountStatus("error");
