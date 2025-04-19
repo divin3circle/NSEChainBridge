@@ -137,8 +137,7 @@ export const createHederaAccount = async (req: Request, res: Response) => {
     user.hederaAccountId = accountInfo.accountId;
     user.privateKey = accountInfo.privateKey;
 
-    // fund user 25HBAR to user's account
-    // Create a transaction to transfer 1 HBAR
+    // fund user 10HBAR to user's account
     const HEDERA_OPERATOR_ID = AccountId.fromString("0.0.5483001");
     const HEDERA_OPERATOR_KEY = PrivateKey.fromStringECDSA(
       "a21d310e140357b2b623fe74a9499af53d8847b1fd0f0b23376ef76d2ea0bce0"
@@ -180,7 +179,7 @@ export const createHederaAccount = async (req: Request, res: Response) => {
         symbol: "HBAR",
         name: "Hedera Testnet",
         decimals: 18,
-        totalSupply: "1000000000000000000000000000", // 1 trillion HBAR
+        totalSupply: "",
         stockCode: "HBAR",
         treasuryAccountId: "0.0.5483001", // Add treasury account ID
       });
