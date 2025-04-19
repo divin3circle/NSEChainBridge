@@ -143,6 +143,9 @@ export const sellTokensForUsdc = async (req: Request, res: Response) => {
       const actualFee = await getTransactionFees(swapResult.transactionId);
       console.log(`Actual transaction fee: ${actualFee} HBAR`);
 
+      // Deduct HBAR fees from user's account
+      await deductHbarFees(userId, actualFee);
+
       // Update user's token holdings
       // Subtract the sold tokens from both balance and lockedQuantity
       const tokenHoldingIndex = user.tokenHoldings.findIndex(
@@ -168,9 +171,6 @@ export const sellTokensForUsdc = async (req: Request, res: Response) => {
       const usdcHoldingIndex = user.tokenHoldings.findIndex(
         (holding) => holding.tokenId === USDC_TOKEN_ID
       );
-
-      // Deduct actual HBAR fees
-      await deductHbarFees(userId, actualFee);
 
       if (usdcHoldingIndex >= 0) {
         user.tokenHoldings[usdcHoldingIndex].balance += usdcAmount;

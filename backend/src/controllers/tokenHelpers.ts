@@ -157,12 +157,14 @@ export const getTransactionFees = async (
       console.error("No transaction ID provided");
       return 0; // Return 0 fee if no transaction ID
     }
-
-    // Format transaction ID for Mirror Node API
-    // Convert from "0.0.5483001@1743355957.262204869" to "0.0.5483001-1743355957-262204869"
     const [accountId, timestamp] = transactionId.split("@");
-    const formattedTimestamp = timestamp.replace(".", "-");
-    const formattedTxId = `${accountId}-${formattedTimestamp}`;
+    const [seconds, nanoseconds] = timestamp.split(".");
+    if (!accountId || !timestamp) {
+      console.error("Invalid transaction ID format");
+      return 0; // Return 0 fee if format is invalid
+    }
+    const formattedTxId = `${accountId}-${seconds}-${nanoseconds}`;
+    console.log("Formatted transaction ID for API:", formattedTxId);
 
     console.log("Fetching fees for transaction:", formattedTxId);
 
@@ -189,8 +191,6 @@ export const getTransactionFees = async (
       console.error("Invalid charged_tx_fee:", charged_tx_fee);
       return 0;
     }
-
-    // Convert tinybars to HBAR (1 HBAR = 100,000,000 tinybars)
     const feeInHbar = charged_tx_fee / 100000000;
     console.log(
       `Transaction fee: ${feeInHbar} HBAR (${charged_tx_fee} tinybars)`

@@ -91,6 +91,21 @@ export const createStockToken = async (req: Request, res: Response) => {
 /**
  * Mint tokens from stock holdings
  * @route POST /api/tokens/:stockCode/mint
+ * @notice This gas fee is paid by the OPERATOR_KEY (treasury account)
+ * @description This endpoint allows users to mint tokens based on their stock holdings.
+ * It checks if the user has enough stock, associates the token with the user's account,
+ * and transfers the tokens from the treasury account to the user's account.
+ * The user must have a Hedera account and the token must be associated with the user's account.
+ * The amount of tokens minted is based on the user's stock holdings.
+ * The stock holding is updated to reflect the locked amount.
+ * The transaction is recorded in the database.
+ * The user is notified of the successful minting.
+ * @access Private
+ * @param {string} stockCode - The stock code for which to mint tokens
+ * @param {number} amount - The amount of tokens to mint
+ * @returns {object} - The minted token and updated stock holding information
+ * @throws {Error} - If the user does not have a Hedera account, if the stock holding is not found,
+ *                   if the user does not have enough stock, if the token is not found,
  */
 export const mintStockTokens = async (req: Request, res: Response) => {
   try {
@@ -176,32 +191,13 @@ export const mintStockTokens = async (req: Request, res: Response) => {
       "" // Use treasury key (OPERATOR_KEY) via empty string
     );
 
-    console.log(`Transfer receipt:`, transferReceipt);
-
-    // Get actual transaction fees from Mirror Node API
+    console.log(
+      `Transfer completed. Transaction ID: ${transferReceipt.transactionId}`
+    );
     const actualFee = await getTransactionFees(transferReceipt.transactionId);
     console.log(`Actual transaction fee: ${actualFee} HBAR`);
 
-    // Deduct HBAR fees from user's token holdings
-    const hbarHoldingIndex = user.tokenHoldings.findIndex(
-      (holding) => holding.tokenId === "HBAR"
-    );
-
-    if (hbarHoldingIndex !== -1) {
-      // Update HBAR balance
-      user.tokenHoldings[hbarHoldingIndex].balance -= actualFee;
-      console.log(
-        `Updated HBAR balance: ${user.tokenHoldings[hbarHoldingIndex].balance} HBAR`
-      );
-
-      // Remove HBAR holding if balance is zero
-      if (user.tokenHoldings[hbarHoldingIndex].balance <= 0) {
-        user.tokenHoldings.splice(hbarHoldingIndex, 1);
-        console.log("Removed HBAR holding due to zero balance");
-      }
-    } else {
-      console.log("No HBAR holding found for user");
-    }
+    console.log(`Transfer receipt:`, transferReceipt);
 
     // Create transaction record
     const transaction = new Transaction({
@@ -270,6 +266,22 @@ export const mintStockTokens = async (req: Request, res: Response) => {
 /**
  * Burn tokens to reclaim stock
  * @route POST /api/tokens/:stockCode/burn
+ * @notice The gap is paid by the user redeeming the tokens
+ * @description This endpoint allows users to burn their tokens to reclaim stock.
+ * It checks if the user has enough tokens, verifies the burn transaction,
+ * and updates the user's stock holdings accordingly.
+ * The user must have a Hedera account and the token must be associated with the user's account.
+ * The amount of tokens burned is based on the user's token holdings.
+ * The stock holding is updated to reflect the unlocked amount.
+ * The transaction is recorded in the database.
+ * The user is notified of the successful burn.
+ * @access Private
+ * @param {string} stockCode - The stock code for which to burn tokens
+ * @param {number} amount - The amount of tokens to burn
+ * @param {string} transactionId - The transaction ID of the burn transaction
+ * @returns {object} - The burned token and updated stock holding information
+ * @throws {Error} - If the user does not have a Hedera account, if the token holding is not found,
+ *                  if the user does not have enough tokens, if the token is not found,
  */
 export const burnStockTokens = async (req: Request, res: Response) => {
   try {
@@ -511,6 +523,9 @@ export const getUserTokenBalances = async (req: Request, res: Response) => {
  * Sell tokens for HBAR
  * @route POST /api/tokens/:stockCode/sell
  * @access Private
+ * @notice Not in use yet
+ * @description This endpoint allows users to sell their tokens for HBAR.
+ * It checks if the user has enough tokens, burns the tokens, and transfers HBAR to the user.
  */
 export const sellTokensForHbar = async (req: Request, res: Response) => {
   try {
