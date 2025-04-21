@@ -797,3 +797,64 @@ export const getTokenByStockCode = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error getting token", error });
   }
 };
+
+/**
+ * Deduct USDC from user's balance for HCS message submission
+ * @route POST /api/tokens/deduct-usdc
+ * @access Private
+ * @description This endpoint deducts USDC from user's balance for HCS message submission.
+ * It checks if the user has enough USDC, deducts the amount, and records the transaction.
+ * The user is notified of the successful deduction.
+ */
+export const deductHcsUsdc = async (req: Request, res: Response) => {
+  try {
+    const { transactionId } = req.params;
+    const amount = 1; // Fees for USDC message submission
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if user has enough USDC
+    const userUsdcBalance = await getUserTokenBalance(userId, "USDC");
+    if (userUsdcBalance < amount) {
+      return res.status(400).json({
+        message: `Insufficient USDC balance. You have ${userUsdcBalance} USDC, but tried to deduct ${amount}`,
+      });
+    }
+
+    // Deduct USDC from user's balance
+    await updateUserTokenBalance(userId, "USDC", -amount);
+
+    // Create transaction record
+    const transaction = new Transaction({
+      userId,
+      tokenId: "0.0.5791936",
+      stockCode: "USDC",
+      type: TransactionType.TRANSFER,
+      status: TransactionStatus.COMPLETED,
+      amount,
+      fee: 0,
+      paymentTokenId: "USDC",
+      paymentAmount: amount,
+      hederaTransactionId: transactionId,
+    });
+
+    await transaction.save();
+
+    res.status(200).json({
+      message: `Successfully deducted ${amount} USDC from user ${userId}`,
+      newBalance: userUsdcBalance - amount,
+    });
+  } catch (error) {
+    console.log("Error deducting USDC:", error);
+    res.status(500).json({ message: "Error deducting USDC", error });
+  }
+};

@@ -8,6 +8,7 @@ import {
   getUserTokenBalances,
   verifyUserBurnTransaction,
   getTokenByStockCode,
+  deductHcsUsdc,
 } from "../controllers/tokenController";
 import { sellTokensForUsdc } from "../controllers/sellTokensController";
 import { authMiddleware, requireHederaAccount } from "../middlewares/auth";
@@ -48,6 +49,11 @@ router.post(
   "/:stockCode/sell",
   requireHederaAccount,
   sellTokensForUsdc as RequestHandler
+);
+router.post(
+  "/deduct-usdc/:transactionId",
+  requireHederaAccount,
+  deductHcsUsdc as RequestHandler
 );
 
 export default router;

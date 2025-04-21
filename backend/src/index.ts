@@ -9,6 +9,7 @@ import authRoutes from "./routes/authRoutes";
 import tokenRoutes from "./routes/tokenRoutes";
 import transactionRoutes from "./routes/transactionRoutes";
 import { initializeStockTokens } from "./scripts/initializeStockTokens";
+import topicRoutes from "./routes/topicRoutes";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/tokens", tokenRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/topics", topicRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to NSEChainBridge API" });
