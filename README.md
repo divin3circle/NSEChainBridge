@@ -1,13 +1,13 @@
 # NSEChainBridge
 
-NSEChainBridge is a revolutionary platform that bridges the gap between traditional stock trading and blockchain technology, specifically leveraging the Hedera network. This application enables users to trade NSE stocks using blockchain tokens, providing a seamless and secure trading experience.
+NSEChainBridge is a revolutionary platform that bridges the gap between traditional stock trading and blockchain technology, specifically leveraging the HEDERA network. This application enables users to trade NSE stocks using blockchain tokens, providing a seamless and secure trading experience.
 
-### Completed Features
+## Completed Features
 
 - **User Authentication & Profile Management**
 
   - Secure user registration and login
-  - Hedera account integration
+  - HEDERA account integration
   - Profile management with stock holdings tracking
 
 - **Token Management**
@@ -15,7 +15,7 @@ NSEChainBridge is a revolutionary platform that bridges the gap between traditio
   - Stock token minting and burning
   - Token balance tracking
   - Transaction history
-  - \*_Actual transaction fee handling using Hedera Mirror Node_
+  - \*_Actual transaction fee handling using HEDERA Mirror Node_
 
 - **Stock Trading**
 
@@ -32,14 +32,14 @@ NSEChainBridge is a revolutionary platform that bridges the gap between traditio
 
 ### In Progress Features
 
-- **Hedera Consensus Service (HCS) Integration**
+- **HEDERA Consensus Service (HCS) Integration**
 
   - Community insights sharing
   - Market sentiment analysis
   - Real-time market updates
   - Topic-based communication
 
-- **Hedera AI Agent Integration**
+- **HEDERA AI Agent Integration**
   - Portfolio insights generation
   - Market trend analysis
   - Trading recommendations
@@ -59,16 +59,16 @@ To fast track development of the app we decided to make some initial assumptions
 
 - React Native with Expo
 - TypeScript
-- Hedera SDK
+- HEDERA SDK
 
 ### Backend
 
-- Node.js with Express
+- Node with Express
 - TypeScript
 
 ### Blockchain
 
-- Hedera Network (Testnet)
+- HEDERA Network (Test net)
 - Token Service
 - SaucerSwap
 - Mirror Node API
@@ -99,7 +99,7 @@ EABL/USDC -> 0.0.5797337
 
 - Node.js (v14 or higher)
 - MongoDB
-- Hedera Testnet Account
+- HEDERA Test net Account
 - Expo CLI
 - iOS Simulator
 
@@ -113,7 +113,7 @@ cd NSEChainBridge
 npm install
 ```
 
-2. Install dependencies:
+1. Install dependencies:
 
 ```bash
 # Install backend dependencies
@@ -125,7 +125,7 @@ cd ../app
 npm install
 ```
 
-3. Set up environment variables:
+1. Set up environment variables:
 
 ```bash
 # Backend (.env)
@@ -138,7 +138,7 @@ HEDERA_OPERATOR_KEY=your_operator_key
 API_BASE_URL=your_backend_url
 ```
 
-4. Start the development servers:
+1. Start the development servers:
 
 ```bash
 # Start backend server
@@ -154,7 +154,7 @@ npx expo run:ios
 
 ## Project Structure
 
-```
+```bash
 NSEChainBridge/
 ├── app/                    # Frontend React Native application
 │   ├── components/        # Reusable UI components
