@@ -128,6 +128,14 @@ export default function RootLayout() {
               title: "Hedera Agent",
             }}
           />
+          <Stack.Screen
+            name="tools"
+            options={{
+              headerShown: false,
+              title: "Tools",
+              presentation: "modal",
+            }}
+          />
         </Stack>
       </QueryClientProvider>
     </WagmiProvider>
