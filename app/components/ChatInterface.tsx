@@ -16,6 +16,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
+import { useMCPClient } from "../hooks/useMCPClient";
+import { AuthModal } from "./AuthModal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const { width } = Dimensions.get("window");
 
 const blurhash =
@@ -26,7 +29,45 @@ export const ChatInterface = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showTools, setShowTools] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [userDetails, setUserDetails] = useState<{
+    email: string;
+    accountId: string;
+    privateKey: string;
+  } | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [pendingMessage, setPendingMessage] = useState<string>("");
+
+  const {
+    tools,
+    isLoadingTools,
+    toolsError,
+    processQuery,
+    isProcessingQuery,
+    queryError,
+  } = useMCPClient();
+
+  useEffect(() => {
+    loadUserDetails();
+  }, []);
+
+  const loadUserDetails = async () => {
+    try {
+      const email = "sylus@example.com";
+      const accountId = await AsyncStorage.getItem("hederaAccountId");
+      const privateKey = await AsyncStorage.getItem("hederaPrivateKey");
+
+      if (email && accountId && privateKey) {
+        setUserDetails({
+          email,
+          accountId,
+          privateKey,
+        });
+      }
+    } catch (error) {
+      console.error("Error loading user details:", error);
+    }
+  };
 
   const handleSend = async () => {
     if (!inputMessage.trim()) return;
@@ -43,12 +84,89 @@ export const ChatInterface = () => {
     setShowTools(false);
 
     try {
-      const response = await neoService.sendMessage(inputMessage);
-      setMessages((prev) => [...prev, response]);
+      if (!userDetails) {
+        setPendingMessage(inputMessage);
+        setShowAuthModal(true);
+        return;
+      }
+
+      // First try to send through neoService
+      try {
+        const response = await neoService.sendMessage(inputMessage);
+        setMessages((prev) => [...prev, response]);
+      } catch (neoError) {
+        console.error("Error with neoService:", neoError);
+        // If neoService fails, try MCP client
+        setPendingMessage(inputMessage);
+        setShowAuthModal(true);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
+      const errorMessage: ChatMessage = {
+        role: "assistant",
+        content:
+          "Sorry, I encountered an error processing your request. Please try again.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAuthSubmit = async (userId: string, password: string) => {
+    if (!userDetails) {
+      console.error("User details not found");
+      return;
+    }
+
+    if (!pendingMessage.trim()) {
+      console.error("No pending message to process");
+      return;
+    }
+
+    try {
+      console.log("Processing MCP query with user details:", {
+        userId,
+        accountId: userDetails.accountId,
+        email: userDetails.email,
+        hasPrivateKey: !!userDetails.privateKey,
+        messageLength: pendingMessage.length,
+      });
+
+      const response = await processQuery({
+        query: pendingMessage,
+        userId,
+        accountId: userDetails.accountId,
+        privateKey: userDetails.privateKey,
+        userEmail: userDetails.email,
+        password,
+      });
+
+      if (response.success) {
+        const assistantMessage: ChatMessage = {
+          role: "assistant",
+          content: response.data,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        throw new Error(response.error || "Failed to process query");
+      }
+    } catch (error) {
+      console.error("Error processing query:", error);
+      const errorMessage: ChatMessage = {
+        role: "assistant",
+        content: `Sorry, I encountered an error: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }. Please try again or contact support if the issue persists.`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setShowAuthModal(false);
+      setIsLoading(false);
+      setPendingMessage("");
     }
   };
 
@@ -132,6 +250,12 @@ export const ChatInterface = () => {
 
   return (
     <View style={styles.container}>
+      <AuthModal
+        visible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSubmit={handleAuthSubmit}
+        isLoading={isProcessingQuery}
+      />
       <View style={styles.header}>
         <Image
           source={require("../../assets/images/ai-avatar.jpeg")}
@@ -177,9 +301,19 @@ export const ChatInterface = () => {
                 : styles.assistantMessage,
             ]}
           >
-            <Text style={styles.messageText}>{message.content}</Text>
+            <Text
+              style={[
+                styles.messageText,
+                message.role === "assistant" && styles.assistantMessageText,
+              ]}
+            >
+              {message.content}
+            </Text>
             <Text style={styles.timestamp}>
-              {message.timestamp.toLocaleTimeString()}
+              {message.timestamp.toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </Text>
           </View>
         ))}
@@ -328,20 +462,27 @@ const styles = StyleSheet.create({
   userMessage: {
     alignSelf: "flex-end",
     backgroundColor: Colors.light.primary,
+    color: Colors.light.background,
   },
   assistantMessage: {
     alignSelf: "flex-start",
     backgroundColor: Colors.light.tint,
+    color: Colors.light.titles,
   },
   messageText: {
     fontFamily: fonts.regular,
     fontSize: 16,
     color: Colors.light.background,
   },
+  assistantMessageText: {
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    color: Colors.light.titles,
+  },
   timestamp: {
     fontFamily: fonts.regular,
     fontSize: 12,
-    color: Colors.light.background,
+    color: Colors.light.accent,
     opacity: 0.7,
     marginTop: 4,
   },
