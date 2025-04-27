@@ -42,9 +42,9 @@ const features = [
     image: "/user.png",
   },
   {
-    title: "Analytics & AI",
+    title: "AI Rebalancing",
     description:
-      "Use Hedera Agent to analyze market trends and make informed trading decisions.",
+      "Utilize AI to rebalance your portfolio based on current market status to maximize your returns while minimizing risk.",
     bgColor: "bg-gray-100",
     textColor: "text-black",
     image: "/ai.png",

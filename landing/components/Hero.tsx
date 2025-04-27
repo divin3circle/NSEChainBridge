@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
+import Lottie from "lottie-react";
+import animationData from "../assets/welcome.json";
 
 export default function Hero() {
   return (
@@ -15,17 +16,14 @@ export default function Hero() {
             transition={{ duration: 0.5 }}
             className="flex flex-col justify-center space-y-4"
           >
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-              Navigating the digital landscape for success
+            <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-5xl">
+              Your Gateway to Off-Chain collateralized trading
             </h1>
-            <p className="max-w-[600px] text-gray-500 md:text-xl dark:text-gray-400">
-              NSEChainBridge is a revolutionary platform that bridges the gap
-              between traditional stock trading and blockchain technology,
-              specifically leveraging the Hedera network. This application
-              enables users to trade NSE stocks using blockchain tokens,
-              providing a seamless and secure trading experience.
+            <p className="max-w-[600px] text-gray-500 md:text-xl dark:text-gray-400 my-2">
+              With NSEChainBride you can use your off-chain stocks as
+              collateral, giving you unlimited access to the Web3 world
             </p>
-            <div className="flex flex-col gap-2 min-[400px]:flex-row">
+            <div className="flex flex-col gap-2 min-[400px]:flex-row mt-12">
               <Link
                 href="https://github.com/divin3circle/NSEChainBridge"
                 className="inline-flex h-10 items-center justify-center rounded-md bg-[#111827] px-8 text-sm font-medium text-white hover:bg-[#111827]/90"
@@ -40,13 +38,11 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex items-center justify-center"
           >
-            <Image
-              src="/hero.avif"
-              alt="Hero illustration"
-              width={600}
-              height={515}
-              className="object-contain"
-              priority
+            <Lottie
+              animationData={animationData}
+              loop={true}
+              autoplay={true}
+              className="w-full max-w-[400px] md:max-w-[500px] lg:max-w-[600px]"
             />
           </motion.div>
         </div>

@@ -7,8 +7,8 @@ const stats = [
   {
     icon: <DollarSign className="h-8 w-8 text-[#111827]" />,
     value: "1M+",
-    label: "Trading Volume",
-    description: "Monthly trading volume in USD",
+    label: "AI Trading Volume",
+    description: "Monthly trading volume in USD by AI agents",
   },
   {
     icon: <Users className="h-8 w-8 text-[#111827]" />,
@@ -45,7 +45,7 @@ export default function Stats() {
             Our Targets
           </h2>
           <p className="mx-auto max-w-[700px] text-black md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-            Transforming stock trading with blockchain technology
+            Transforming off-chain collateralization with blockchain technology
           </p>
         </motion.div>
 
