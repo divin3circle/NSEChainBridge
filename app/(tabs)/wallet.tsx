@@ -6,6 +6,7 @@ import {
   Dimensions,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { blurhash, fonts, Colors } from "../../constants/colors";
@@ -16,7 +17,9 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useStocks } from "../hooks/useStocks";
 import { useTransactions } from "../hooks/useTransactions";
+import { Ionicons } from "@expo/vector-icons";
 const { width } = Dimensions.get("window");
+import Clipboard from "@react-native-clipboard/clipboard";
 
 interface User {
   _id: string;
@@ -25,10 +28,45 @@ interface User {
   hederaAccountId?: string;
   privateKey?: string;
 }
+interface TimeSeriesStats {
+  to: string;
+  high: number;
+  low: number;
+  average: number;
+  standardDeviation: number;
+  volatility: number;
+  highTimestamp: string;
+  lowTimestamp: string;
+  dataPoints: number;
+}
+
+interface TimeSeriesData {
+  last1Days: TimeSeriesStats;
+  last7Days: TimeSeriesStats;
+  last30Days: TimeSeriesStats;
+  last60Days: TimeSeriesStats;
+  last90Days: TimeSeriesStats;
+}
 
 const Wallet = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [copiedText, setCopiedText] = useState("");
+
+  const copyToClipboard = () => {
+    Clipboard.setString(user?.hederaAccountId || "");
+    fetchCopiedText();
+    setTimeout(() => {
+      setCopiedText("");
+    }, 2000);
+    alert("Copied to clipboard");
+  };
+
+  const fetchCopiedText = async () => {
+    const text = await Clipboard.getString();
+    setCopiedText(text);
+  };
 
   useEffect(() => {
     const fetchLocalUserData = async () => {
@@ -65,8 +103,28 @@ const Wallet = () => {
         console.error("Error fetching wallet details:", error);
       }
     };
+    const fetchExchangeRate = async () => {
+      const rate = await getExchangeRate();
+      setExchangeRate(rate);
+    };
     fetchLocalUserData();
+    fetchExchangeRate();
   }, []);
+
+  async function getExchangeRate(): Promise<number> {
+    try {
+      const response = await fetch(
+        "https://www.xe.com/api/protected/statistics/?from=USD&to=KES"
+      );
+      if (!response.ok) {
+        return 129.67; // Default fallback rate
+      }
+      const data: TimeSeriesData = await response.json();
+      return data.last1Days.average;
+    } catch (error) {
+      return 129.65; // Default fallback rate on error
+    }
+  }
   const { transactions, isLoading, error } = useTransactions();
 
   const { tokens } = useStocks();
@@ -138,7 +196,9 @@ const Wallet = () => {
               >
                 {user && user.hederaAccountId}
               </Text>
-              {/* <Ionicons name="copy" size={14} /> */}
+              <TouchableOpacity onPress={copyToClipboard}>
+                <Ionicons name="copy" size={14} />
+              </TouchableOpacity>
             </View>
             <Text
               style={{
@@ -250,6 +310,20 @@ const Wallet = () => {
               contentFit="cover"
               transition={1000}
             />
+            <Image
+              source={require("../../assets/images/usdc.png")}
+              style={{
+                width: 70,
+                height: 70,
+                borderRadius: 35,
+                position: "absolute",
+                top: 20,
+                left: 60,
+              }}
+              placeholder={{ blurhash }}
+              contentFit="cover"
+              transition={1000}
+            />
             <Text
               style={{
                 fontFamily: fonts.semiBold,
@@ -257,7 +331,11 @@ const Wallet = () => {
                 fontSize: 20,
               }}
             >
-              KES 0.996
+              {exchangeRate ? (
+                "KES " + exchangeRate
+              ) : (
+                <ActivityIndicator size={12} color="#000" />
+              )}
             </Text>
             <Text
               style={{
@@ -276,14 +354,14 @@ const Wallet = () => {
             <Text
               style={{
                 fontFamily: fonts.regular,
-                fontSize: 18,
+                fontSize: 14,
                 position: "absolute",
                 bottom: 45,
                 left: 20,
               }}
             >
               {" "}
-              KSH
+              KSH / USDC
             </Text>
           </View>
           <View>
