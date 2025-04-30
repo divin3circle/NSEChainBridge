@@ -2,8 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Lottie from "lottie-react";
-import animationData from "../assets/welcome.json";
+import HeroAnimation from "./HeroAnimation";
 
 export default function Hero() {
   return (
@@ -38,12 +37,7 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex items-center justify-center"
           >
-            <Lottie
-              animationData={animationData}
-              loop={true}
-              autoplay={true}
-              className="w-full max-w-[400px] md:max-w-[500px] lg:max-w-[600px]"
-            />
+            <HeroAnimation />
           </motion.div>
         </div>
 
